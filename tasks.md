@@ -129,7 +129,7 @@
   - Implement global options (--verbose, --dry-run, --force)
   - Add help text and usage examples
 
-- [ ] **Task 5.2**: Implement `init` command
+- [x] **Task 5.2**: Implement `init` command
   - Initialize configuration directories
   - Create default global config
   - Display setup instructions
