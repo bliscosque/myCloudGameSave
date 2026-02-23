@@ -113,6 +113,17 @@ def create_parser():
         help='Configuration value (for set action)'
     )
     
+    # add command
+    add_parser = subparsers.add_parser(
+        'add',
+        help='Manually add a game configuration'
+    )
+    add_parser.add_argument(
+        'game_id',
+        nargs='?',
+        help='Game ID (optional, will prompt if not provided)'
+    )
+    
     return parser
 
 
@@ -246,6 +257,91 @@ def cmd_list(args):
             print(f"✗ {game_id}: Error loading config - {e}\n")
 
 
+def cmd_add(args):
+    """Manually add a game configuration"""
+    from src.game_detector import GameDetector
+    
+    config_mgr = ConfigManager()
+    if not config_mgr.config_exists():
+        print("✗ Configuration not initialized. Run 'gamesync init' first.")
+        sys.exit(1)
+    
+    # Get game ID
+    if args.game_id:
+        game_id = args.game_id
+    else:
+        game_id = input("Game ID (lowercase, use hyphens): ").strip()
+    
+    if not game_id:
+        print("✗ Game ID is required")
+        sys.exit(1)
+    
+    # Check if already exists
+    existing_games = config_mgr.list_games()
+    if game_id in existing_games and not args.force:
+        print(f"✗ Game '{game_id}' already exists. Use --force to overwrite.")
+        sys.exit(1)
+    
+    # Get game details
+    name = input("Game name: ").strip()
+    if not name:
+        print("✗ Game name is required")
+        sys.exit(1)
+    
+    local_path = input("Local save path: ").strip()
+    if not local_path:
+        print("✗ Local path is required")
+        sys.exit(1)
+    
+    # Validate local path
+    local_path_obj = Path(local_path).expanduser()
+    if not local_path_obj.exists():
+        print(f"⚠ Warning: Local path does not exist: {local_path_obj}")
+        if not args.force:
+            response = input("Continue anyway? [y/N]: ")
+            if response.lower() != 'y':
+                print("Cancelled.")
+                sys.exit(1)
+    
+    backup_dir_name = input("Backup directory name (for cloud): ").strip()
+    if not backup_dir_name:
+        print("✗ Backup directory name is required")
+        sys.exit(1)
+    
+    # Create config
+    from datetime import datetime
+    config = {
+        "game": {
+            "id": game_id,
+            "name": name,
+            "platform": "manual",
+            "backup_dir_name": backup_dir_name
+        },
+        "paths": {
+            "local": str(local_path_obj),
+            "cloud": backup_dir_name
+        },
+        "sync": {
+            "enabled": True,
+            "exclude_patterns": ["*.tmp", "*.log"],
+            "last_sync": ""
+        },
+        "metadata": {
+            "auto_detected": False,
+            "last_modified": datetime.now().isoformat()
+        }
+    }
+    
+    # Save config
+    try:
+        config_mgr.save_game_config(game_id, config)
+        print(f"\n✓ Game '{name}' added successfully!")
+        print(f"  Config: config/{config_mgr.hostname}/games/{game_id}.toml")
+    except Exception as e:
+        print(f"\n✗ Failed to save config: {e}")
+        sys.exit(1)
+
+
 def setup_logging(args):
     """Set up logging based on config and arguments
     
@@ -313,6 +409,8 @@ def main():
         cmd_detect(args)
     elif args.command == 'list':
         cmd_list(args)
+    elif args.command == 'add':
+        cmd_add(args)
     else:
         print(f"Command '{args.command}' not yet implemented")
 

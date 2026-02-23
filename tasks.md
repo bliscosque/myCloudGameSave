@@ -146,7 +146,7 @@
   - Show last sync time
   - Indicate if conflicts exist
 
-- [ ] **Task 5.5**: Implement `add` command
+- [x] **Task 5.5**: Implement `add` command
   - Interactive prompt for game details
   - Manual path entry for local and cloud
   - Validate paths
