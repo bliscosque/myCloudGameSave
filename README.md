@@ -23,27 +23,30 @@ A multi-platform command-line tool that synchronizes game save files between loc
 git clone https://github.com/bliscosque/myCloudGameSave.git
 cd myCloudGameSave
 
+# Create virtual environment (recommended)
+python3 -m venv ~/vscode/venv
+
 # Install dependencies
-pip install -r requirements.txt
+~/vscode/venv/bin/pip install -r requirements.txt
 ```
 
 ## Quick Start
 
 ```bash
 # Initialize configuration
-python gamesync.py init
+~/vscode/venv/bin/python gamesync.py init
 
 # Auto-detect games
-python gamesync.py detect
+~/vscode/venv/bin/python gamesync.py detect
 
 # List configured games
-python gamesync.py list
+~/vscode/venv/bin/python gamesync.py list
 
 # Sync a specific game
-python gamesync.py sync <game-id>
+~/vscode/venv/bin/python gamesync.py sync <game-id>
 
 # Sync all games
-python gamesync.py sync --all
+~/vscode/venv/bin/python gamesync.py sync --all
 ```
 
 ## Configuration
