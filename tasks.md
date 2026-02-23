@@ -123,7 +123,7 @@
 
 ### Milestone 5: CLI Interface
 
-- [ ] **Task 5.1**: Implement CLI framework
+- [x] **Task 5.1**: Implement CLI framework
   - Set up command-line argument parser
   - Define command structure and subcommands
   - Implement global options (--verbose, --dry-run, --force)

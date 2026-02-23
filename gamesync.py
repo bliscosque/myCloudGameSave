@@ -15,6 +15,107 @@ from src.config_manager import ConfigManager, ConfigError
 from src.logger import init_logger, get_logger
 
 
+def create_parser():
+    """Create and configure argument parser
+    
+    Returns:
+        Configured ArgumentParser instance
+    """
+    parser = argparse.ArgumentParser(
+        prog='gamesync',
+        description='Synchronize game saves between local machine and cloud storage',
+        epilog='For more information, see README.md'
+    )
+    
+    # Global options
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help='Enable verbose output'
+    )
+    parser.add_argument(
+        '--dry-run',
+        action='store_true',
+        help='Show what would be done without making changes'
+    )
+    parser.add_argument(
+        '--force',
+        action='store_true',
+        help='Force operation without confirmation prompts'
+    )
+    
+    # Subcommands
+    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    
+    # init command
+    init_parser = subparsers.add_parser(
+        'init',
+        help='Initialize configuration for this machine'
+    )
+    
+    # detect command
+    detect_parser = subparsers.add_parser(
+        'detect',
+        help='Auto-detect non-Steam games from Steam library'
+    )
+    
+    # list command
+    list_parser = subparsers.add_parser(
+        'list',
+        help='List all configured games'
+    )
+    
+    # sync command
+    sync_parser = subparsers.add_parser(
+        'sync',
+        help='Synchronize game saves'
+    )
+    sync_parser.add_argument(
+        'game_id',
+        nargs='?',
+        help='Game ID to sync (omit to sync all games)'
+    )
+    sync_parser.add_argument(
+        '--all',
+        action='store_true',
+        help='Sync all configured games'
+    )
+    
+    # status command
+    status_parser = subparsers.add_parser(
+        'status',
+        help='Show sync status for games'
+    )
+    status_parser.add_argument(
+        'game_id',
+        nargs='?',
+        help='Game ID to check (omit for all games)'
+    )
+    
+    # config command
+    config_parser = subparsers.add_parser(
+        'config',
+        help='Manage configuration'
+    )
+    config_parser.add_argument(
+        'action',
+        choices=['show', 'edit', 'set'],
+        help='Configuration action'
+    )
+    config_parser.add_argument(
+        'key',
+        nargs='?',
+        help='Configuration key (for set action)'
+    )
+    config_parser.add_argument(
+        'value',
+        nargs='?',
+        help='Configuration value (for set action)'
+    )
+    
+    return parser
+
+
 def cmd_init(args):
     """Initialize configuration"""
     config_mgr = ConfigManager()
@@ -82,18 +183,12 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
-    parser.add_argument('-v', '--verbose', action='store_true',
-                       help='Enable verbose output')
-    
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
-    
-    # init command
-    parser_init = subparsers.add_parser('init', help='Initialize configuration')
-    parser_init.set_defaults(func=cmd_init)
-    
-    # Parse arguments
+def main():
+    """Main entry point"""
+    parser = create_parser()
     args = parser.parse_args()
     
+    # Show help if no command specified
     if args.command is None:
         parser.print_help()
         return
@@ -104,10 +199,13 @@ def main():
     # Log command execution
     if config_mgr:
         logger = get_logger()
-        logger.info(f"Executing command: {args.command}")
+        logger.info(f"Executing command: {args.command} (verbose={args.verbose}, dry_run={args.dry_run}, force={args.force})")
     
     # Execute command
-    args.func(args)
+    if args.command == 'init':
+        cmd_init(args)
+    else:
+        print(f"Command '{args.command}' not yet implemented")
 
 
 if __name__ == "__main__":
