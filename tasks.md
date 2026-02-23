@@ -36,21 +36,21 @@
 - [ ] **Task 2.1**: Implement Steam path detection
   - Detect Steam installation on Linux (~/.local/share/Steam)
   - Detect Steam installation on Windows (Program Files)
-  - Parse Steam libraryfolders.vdf
-  - Handle multiple Steam library locations
+  - Find Steam userdata directory
+  - Handle multiple Steam user accounts
 
-- [ ] **Task 2.2**: Implement Steam game detection
-  - List installed Steam games from library folders
-  - Parse appmanifest files for game information
-  - Detect Proton/Wine prefix paths for compatibility layer games
-  - Detect native Linux game paths
+- [ ] **Task 2.2**: Implement non-Steam game detection
+  - Parse shortcuts.vdf file (binary VDF format)
+  - Extract non-Steam game information (AppID, name, exe path)
+  - Build list of manually added non-Steam games
+  - Handle both Windows and Linux shortcuts format
 
 - [ ] **Task 2.3**: Implement save location detection heuristics
   - Create database of common save locations per game
   - Implement path expansion for Windows user directories
   - Implement path expansion for Linux XDG directories
-  - Handle Steam Cloud sync directories
-  - Support custom-added non-Steam games
+  - Check game installation directory for saves
+  - Check Proton/Wine prefix paths for Windows games on Linux
 
 - [ ] **Task 2.4**: Implement custom directory scanning
   - Scan user-configured game directories
@@ -310,6 +310,7 @@
   - Compression for cloud storage
 
 - [ ] **Enhancement 3**: Additional launcher support
+  - Native Steam games detection
   - Epic Games Store detection
   - GOG Galaxy detection
   - Origin/EA App detection

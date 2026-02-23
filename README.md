@@ -1,12 +1,12 @@
 # Cloud Game Save Synchronization Tool
 
-A multi-platform command-line tool that synchronizes game save files between local machines and a cloud-mounted directory. Supports Windows and Linux, with special support for Steam games (including custom-added non-Steam games).
+A multi-platform command-line tool that synchronizes game save files between local machines and a cloud-mounted directory. Supports Windows and Linux, with special support for non-Steam games that have been manually added to the Steam library.
 
 ## Features
 
 - Manual synchronization of game saves to cloud storage
 - Timestamp-based conflict detection with backup creation
-- Auto-detection of Steam games (including Proton/Wine games on Linux)
+- Auto-detection of non-Steam games added to Steam library
 - Per-game configuration files for easy manual editing
 - Support for custom game directories
 - Cross-platform (Windows & Linux)
@@ -72,6 +72,7 @@ Phase 1 (CLI) is currently in development. See [tasks.md](tasks.md) for detailed
 
 - Phase 2: Qt-based GUI
 - Automatic file watching and sync
+- Support for native Steam games
 - Additional game launcher support (Epic, GOG, etc.)
 
 ## License

@@ -22,11 +22,10 @@ A multi-platform command-line tool that synchronizes game save files between loc
 
 ### 2.3 Game Detection
 
-- **FR-3.1**: The tool shall attempt to auto-detect Steam games on both Windows and Linux
-- **FR-3.2**: The tool shall support Steam games that were custom-added to the Steam library (non-Steam games)
-- **FR-3.3**: The tool shall check a configurable list of common game installation directories
-- **FR-3.4**: The tool shall allow manual configuration of game save locations
-- **FR-3.5**: Auto-detected game configurations shall be editable by the user
+- **FR-3.1**: The tool shall attempt to auto-detect non-Steam games that have been manually added to the Steam library
+- **FR-3.2**: The tool shall check a configurable list of common game installation directories
+- **FR-3.3**: The tool shall allow manual configuration of game save locations
+- **FR-3.4**: Auto-detected game configurations shall be editable by the user
 
 ### 2.4 Configuration Management
 
@@ -58,7 +57,7 @@ A multi-platform command-line tool that synchronizes game save files between loc
 
 - **NFR-1.1**: The tool shall run on Windows 10/11
 - **NFR-1.2**: The tool shall run on modern Linux distributions
-- **NFR-1.3**: The tool shall be compatible with Steam on both platforms
+- **NFR-1.3**: The tool shall detect non-Steam games added to Steam library on both platforms
 - **NFR-1.4**: All configuration and data shall be stored within the project directory
 - **NFR-1.5**: Configuration shall be organized by hostname to support multiple machines
 
@@ -93,9 +92,10 @@ A multi-platform command-line tool that synchronizes game save files between loc
 
 - **FE-1**: Qt-based GUI for easier configuration and monitoring
 - **FE-2**: Automatic file watching and sync on changes
-- **FE-3**: Support for additional game launchers (Epic, GOG, etc.)
-- **FE-4**: Sync scheduling within the tool
-- **FE-5**: Cloud provider integration (direct API access without mounting)
+- **FE-3**: Support for native Steam games (in addition to non-Steam)
+- **FE-4**: Support for additional game launchers (Epic, GOG, etc.)
+- **FE-5**: Sync scheduling within the tool
+- **FE-6**: Cloud provider integration (direct API access without mounting)
 
 ## 5. Constraints
 

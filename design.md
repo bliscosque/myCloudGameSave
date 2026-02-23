@@ -125,26 +125,26 @@ Example: save001.dat.20260223-103045.local.backup
 
 **Responsibilities**:
 - Detect Steam installation paths
-- Parse Steam library folders
-- Identify game save locations
+- Parse Steam shortcuts.vdf to find non-Steam games
+- Identify game save locations for non-Steam games
 - Support platform-specific detection logic
 
 **Platform-Specific Paths**:
 
 **Linux**:
 - Steam: `~/.local/share/Steam` or `~/.steam/steam`
-- Steam library: `steamapps/libraryfolders.vdf`
+- Non-Steam shortcuts: `userdata/<userid>/config/shortcuts.vdf`
 - Proton saves: `steamapps/compatdata/<appid>/pfx/drive_c/users/steamuser/`
-- Native saves: Various (per-game detection)
 
 **Windows**:
 - Steam: `C:\Program Files (x86)\Steam`
+- Non-Steam shortcuts: `userdata\<userid>\config\shortcuts.vdf`
 - User saves: `%USERPROFILE%\Documents`, `%APPDATA%`, `%LOCALAPPDATA%`
 
 **Key Functions**:
 - `detect_steam_path()` - Find Steam installation
-- `parse_steam_libraries()` - Get all Steam library folders
-- `detect_steam_games()` - List installed Steam games
+- `parse_shortcuts_vdf()` - Parse non-Steam games from shortcuts.vdf
+- `detect_non_steam_games()` - List manually added non-Steam games
 - `guess_save_location(game_info)` - Heuristic for save location
 - `detect_custom_games(paths)` - Scan custom directories
 
