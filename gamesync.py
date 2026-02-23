@@ -141,6 +141,69 @@ def cmd_init(args):
         sys.exit(1)
 
 
+def cmd_detect(args):
+    """Detect non-Steam games from Steam library"""
+    from src.game_detector import GameDetector
+    
+    config_mgr = ConfigManager()
+    if not config_mgr.config_exists():
+        print("✗ Configuration not initialized. Run 'gamesync init' first.")
+        sys.exit(1)
+    
+    print("Detecting non-Steam games from Steam library...")
+    detector = GameDetector()
+    games = detector.detect_non_steam_games()
+    
+    if not games:
+        print("\n✗ No non-Steam games found in Steam library")
+        return
+    
+    print(f"\n✓ Found {len(games)} non-Steam game(s):\n")
+    
+    for i, game in enumerate(games, 1):
+        game_id = detector.create_game_id(game['name'])
+        backup_dir = detector.create_backup_dir_name(game)
+        
+        print(f"{i}. {game['name']}")
+        print(f"   ID: {game_id}")
+        print(f"   Exe: {game['exe']}")
+        if args.verbose:
+            print(f"   Start Dir: {game.get('start_dir', 'N/A')}")
+            print(f"   Backup Dir: {backup_dir}")
+        print()
+    
+    # Prompt user to confirm
+    if not args.force:
+        response = input("Add all detected games to configuration? [y/N]: ")
+        if response.lower() != 'y':
+            print("Cancelled.")
+            return
+    
+    # Create game configs
+    added = 0
+    skipped = 0
+    
+    for game in games:
+        game_id = detector.create_game_id(game['name'])
+        save_locations = detector.detect_save_locations(game)
+        game_config = detector.create_game_config(game, save_locations)
+        success = detector.save_game_config(game_id, game_config, overwrite=False)
+        
+        if success:
+            print(f"✓ Added: {game['name']}")
+            added += 1
+        else:
+            print(f"⊘ Skipped (already exists): {game['name']}")
+            skipped += 1
+    
+    print(f"\n✓ Added {added} game(s), skipped {skipped}")
+    if added > 0:
+        print("\nNext steps:")
+        print("1. Review game configs in config/<hostname>/games/")
+        print("2. Verify save_locations are correct")
+        print("3. Run 'gamesync sync --all' to synchronize")
+
+
 def setup_logging(args):
     """Set up logging based on config and arguments
     
@@ -204,6 +267,8 @@ def main():
     # Execute command
     if args.command == 'init':
         cmd_init(args)
+    elif args.command == 'detect':
+        cmd_detect(args)
     else:
         print(f"Command '{args.command}' not yet implemented")
 

@@ -134,7 +134,7 @@
   - Create default global config
   - Display setup instructions
 
-- [ ] **Task 5.3**: Implement `detect` command
+- [x] **Task 5.3**: Implement `detect` command
   - Run game detection algorithms
   - Display detected games
   - Prompt user to confirm which games to add
