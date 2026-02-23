@@ -163,6 +163,40 @@ def cmd_detect(args):
     
     print("Detecting non-Steam games from Steam library...")
     detector = GameDetector(config_manager=config_mgr)
+    
+    # Show debug info if verbose
+    if args.verbose:
+        print("\n[Debug Info]")
+        steam_path = detector.detect_steam_path()
+        print(f"Steam path: {steam_path}")
+        print(f"Steam exists: {steam_path.exists() if steam_path else False}")
+        
+        if steam_path:
+            userdata = steam_path / "userdata"
+            print(f"Userdata path: {userdata}")
+            print(f"Userdata exists: {userdata.exists()}")
+            
+            user_ids = detector.detect_user_ids()
+            print(f"User IDs found: {user_ids}")
+            
+            for uid in user_ids:
+                shortcuts_path = detector.get_shortcuts_path(uid)
+                print(f"\nUser {uid}:")
+                print(f"  Shortcuts path: {shortcuts_path}")
+                print(f"  Shortcuts exists: {shortcuts_path.exists() if shortcuts_path else False}")
+                
+                if shortcuts_path and shortcuts_path.exists():
+                    try:
+                        from src.vdf_parser import ShortcutsParser
+                        parser = ShortcutsParser(shortcuts_path)
+                        vdf_games = parser.parse()
+                        print(f"  Games in shortcuts.vdf: {len(vdf_games)}")
+                        for g in vdf_games:
+                            print(f"    - {g.get('name', 'Unknown')}")
+                    except Exception as e:
+                        print(f"  Error parsing shortcuts.vdf: {e}")
+        print()
+    
     games = detector.detect_non_steam_games()
     
     if not games:
