@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 from .vdf_parser import ShortcutsParser
+from .save_detector import SaveLocationDetector
 
 
 class GameDetector:
@@ -28,6 +29,7 @@ class GameDetector:
         self.steam_path: Optional[Path] = None
         self.userdata_path: Optional[Path] = None
         self.user_ids: List[str] = []
+        self.save_detector = SaveLocationDetector(os_type)
     
     def detect_steam_path(self) -> Optional[Path]:
         """Detect Steam installation path
@@ -190,6 +192,17 @@ class GameDetector:
         
         return all_games
     
+    def detect_save_locations(self, game_info: Dict[str, Any]) -> List[Path]:
+        """Detect potential save locations for a game
+        
+        Args:
+            game_info: Game information dictionary
+            
+        Returns:
+            List of potential save directories
+        """
+        return self.save_detector.find_save_directories(game_info, self.steam_path)
+    
     def detect_all(self) -> dict:
         """Run all detection steps and return summary
         
@@ -214,5 +227,9 @@ class GameDetector:
         
         # Detect non-Steam games
         results["non_steam_games"] = self.detect_non_steam_games()
+        
+        # Detect save locations for each game
+        for game in results["non_steam_games"]:
+            game['potential_save_locations'] = self.detect_save_locations(game)
         
         return results

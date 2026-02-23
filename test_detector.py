@@ -101,9 +101,37 @@ def test_non_steam_games():
         return True
 
 
+def test_save_locations():
+    """Test save location detection"""
+    print("\nTest 6: Detecting save locations...")
+    
+    detector = GameDetector()
+    games = detector.detect_non_steam_games()
+    
+    if not games:
+        print("  No games to test (skipping)")
+        return True
+    
+    # Test first game
+    game = games[0]
+    print(f"  Testing: {game['name']}")
+    
+    save_locations = detector.detect_save_locations(game)
+    
+    if save_locations:
+        print(f"  ✓ Found {len(save_locations)} potential save location(s):")
+        for loc in save_locations:
+            print(f"    - {loc}")
+            print(f"      Exists: {loc.exists()}")
+        return True
+    else:
+        print("  No save locations detected (may need manual configuration)")
+        return True
+
+
 def test_detect_all():
     """Test complete detection"""
-    print("\nTest 6: Running complete detection...")
+    print("\nTest 7: Running complete detection...")
     
     detector = GameDetector()
     results = detector.detect_all()
@@ -117,6 +145,12 @@ def test_detect_all():
     
     for shortcut in results['shortcuts_files']:
         print(f"    - User {shortcut['user_id']}: {shortcut['path']}")
+    
+    # Show save locations for first game
+    if results['non_steam_games']:
+        game = results['non_steam_games'][0]
+        save_locs = game.get('potential_save_locations', [])
+        print(f"  Save locations for '{game['name']}': {len(save_locs)}")
     
     if results['steam_path']:
         print("✓ Detection complete")
@@ -135,6 +169,7 @@ def main():
         test_user_ids,
         test_shortcuts_path,
         test_non_steam_games,
+        test_save_locations,
         test_detect_all
     ]
     

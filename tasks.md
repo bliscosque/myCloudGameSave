@@ -45,7 +45,7 @@
   - Build list of manually added non-Steam games
   - Handle both Windows and Linux shortcuts format
 
-- [ ] **Task 2.3**: Implement save location detection heuristics
+- [x] **Task 2.3**: Implement save location detection heuristics
   - Create database of common save locations per game
   - Implement path expansion for Windows user directories
   - Implement path expansion for Linux XDG directories
@@ -336,14 +336,14 @@
 
 **Phase 1 - CLI Implementation**
 - Milestone 1: Project Setup & Core Infrastructure (4/4 tasks) ✓
-- Milestone 2: Game Detection & Configuration (2/5 tasks)
+- Milestone 2: Game Detection & Configuration (3/5 tasks)
 - Milestone 3: Sync Engine (0/5 tasks)
 - Milestone 4: Conflict Resolution (0/4 tasks)
 - Milestone 5: CLI Interface (0/8 tasks)
 - Milestone 6: Testing & Documentation (0/5 tasks)
 - Milestone 7: Polish & Release (0/5 tasks)
 
-**Total Phase 1 Progress: 6/36 tasks completed**
+**Total Phase 1 Progress: 7/36 tasks completed**
 
 ---
 
