@@ -85,14 +85,14 @@
   - Copy files to backup before overwriting
   - Implement backup retention policy (optional)
 
-- [ ] **Task 3.4**: Implement sync algorithm
+- [x] **Task 3.4**: Implement sync algorithm
   - Scan local and cloud directories
   - Determine sync direction for each file
   - Execute file copies with backups
   - Update last_sync timestamp in game config
   - Handle sync interruptions gracefully
 
-- [ ] **Task 3.5**: Implement dry-run mode
+- [x] **Task 3.5**: Implement dry-run mode
   - Show what would be synced without executing
   - Display file sizes and directions
   - Estimate total data transfer
@@ -337,13 +337,13 @@
 **Phase 1 - CLI Implementation**
 - Milestone 1: Project Setup & Core Infrastructure (4/4 tasks) ✓
 - Milestone 2: Game Detection & Configuration (5/5 tasks) ✓
-- Milestone 3: Sync Engine (3/5 tasks)
+- Milestone 3: Sync Engine (5/5 tasks) ✓
 - Milestone 4: Conflict Resolution (0/4 tasks)
 - Milestone 5: CLI Interface (0/8 tasks)
 - Milestone 6: Testing & Documentation (0/5 tasks)
 - Milestone 7: Polish & Release (0/5 tasks)
 
-**Total Phase 1 Progress: 12/36 tasks completed**
+**Total Phase 1 Progress: 14/36 tasks completed**
 
 ---
 

@@ -331,6 +331,108 @@ def test_backup_with_timestamp():
         return True
 
 
+def test_sync_algorithm():
+    """Test complete sync algorithm"""
+    print("\nTest 12: Complete sync algorithm...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        backup_dir = Path(tmpdir) / "backups"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create test scenario
+        (local_dir / "only_local.dat").write_text("local data")
+        (cloud_dir / "only_cloud.dat").write_text("cloud data")
+        (local_dir / "same.dat").write_text("same data")
+        (cloud_dir / "same.dat").write_text("same data")
+        
+        engine = SyncEngine()
+        results = engine.sync_files(local_dir, cloud_dir, backup_dir)
+        
+        assert results["success"]
+        assert results["files_synced"] >= 2  # only_local and only_cloud
+        assert results["conflicts"] == 0
+        
+        # Verify files were synced
+        assert (cloud_dir / "only_local.dat").exists()
+        assert (local_dir / "only_cloud.dat").exists()
+        
+        print(f"  ✓ Synced {results['files_synced']} files")
+        return True
+
+
+def test_sync_with_backup():
+    """Test sync creates backups before overwriting"""
+    print("\nTest 13: Sync with backup creation...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        backup_dir = Path(tmpdir) / "backups"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create files that will be overwritten
+        local_file = local_dir / "save.dat"
+        cloud_file = cloud_dir / "save.dat"
+        
+        cloud_file.write_text("old cloud data")
+        time.sleep(0.1)
+        local_file.write_text("new local data")
+        
+        engine = SyncEngine()
+        results = engine.sync_files(local_dir, cloud_dir, backup_dir)
+        
+        assert results["success"]
+        
+        # Check backup was created
+        backups = list(backup_dir.glob("*.backup"))
+        assert len(backups) >= 1
+        assert any("cloud.backup" in b.name for b in backups)
+        
+        # Verify cloud file was updated
+        assert cloud_file.read_text() == "new local data"
+        
+        print(f"  ✓ Created {len(backups)} backup(s) before overwriting")
+        return True
+
+
+def test_dry_run():
+    """Test dry-run mode"""
+    print("\nTest 14: Dry-run mode...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        backup_dir = Path(tmpdir) / "backups"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create test file
+        (local_dir / "test.dat").write_text("test data")
+        
+        engine = SyncEngine()
+        results = engine.sync_files(local_dir, cloud_dir, backup_dir, dry_run=True)
+        
+        assert results["success"]
+        
+        # Verify no actual changes were made
+        assert not (cloud_dir / "test.dat").exists()
+        
+        # But action was recorded with details
+        assert len(results["actions"]) >= 1
+        action = results["actions"][0]
+        assert action.get("dry_run")
+        assert "direction" in action
+        assert "size" in action or action["action"] == "skip"
+        
+        print(f"  ✓ Dry-run mode works (no actual changes)")
+        print(f"    Direction: {action.get('direction')}, Size: {action.get('size', 'N/A')} bytes")
+        return True
+
+
 def main():
     print("=== Sync Engine Tests ===\n")
     
@@ -345,7 +447,10 @@ def main():
         test_copy_file_permissions,
         test_disk_space_check,
         test_create_backup,
-        test_backup_with_timestamp
+        test_backup_with_timestamp,
+        test_sync_algorithm,
+        test_sync_with_backup,
+        test_dry_run
     ]
     
     results = []

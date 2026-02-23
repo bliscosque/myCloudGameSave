@@ -253,6 +253,109 @@ class SyncEngine:
             print(f"Error creating backup of {file_path}: {e}")
             return None
     
+    def sync_files(self, local_dir: Path, cloud_dir: Path, backup_dir: Path, 
+                   last_sync: Optional[str] = None, dry_run: bool = False) -> Dict[str, Any]:
+        """Synchronize files between local and cloud directories
+        
+        Args:
+            local_dir: Local directory path
+            cloud_dir: Cloud directory path
+            backup_dir: Backup directory path
+            last_sync: ISO format timestamp of last sync (optional)
+            dry_run: If True, only show what would be done (default: False)
+            
+        Returns:
+            Dictionary with sync results
+        """
+        results = {
+            "success": True,
+            "files_synced": 0,
+            "files_skipped": 0,
+            "conflicts": 0,
+            "errors": [],
+            "actions": []
+        }
+        
+        # Compare directories
+        comparisons = self.compare_directories(local_dir, cloud_dir, last_sync)
+        
+        for comp in comparisons:
+            action_result = {
+                "filename": comp.filename,
+                "action": comp.action.value,
+                "success": False
+            }
+            
+            # Add file size information
+            if comp.local_path and comp.local_path.exists():
+                action_result["local_size"] = comp.local_size
+            if comp.cloud_path and comp.cloud_path.exists():
+                action_result["cloud_size"] = comp.cloud_size
+            
+            try:
+                if comp.action == SyncAction.COPY_TO_CLOUD:
+                    action_result["direction"] = "local → cloud"
+                    action_result["size"] = comp.local_size
+                    
+                    if dry_run:
+                        action_result["success"] = True
+                        action_result["dry_run"] = True
+                    else:
+                        # Backup cloud file if it exists
+                        if comp.cloud_path and comp.cloud_path.exists():
+                            self.create_backup(comp.cloud_path, backup_dir, "cloud")
+                        
+                        # Copy to cloud
+                        success = self.copy_file(comp.local_path, cloud_dir / comp.filename)
+                        action_result["success"] = success
+                        
+                        if success:
+                            results["files_synced"] += 1
+                        else:
+                            results["errors"].append(f"Failed to copy {comp.filename} to cloud")
+                
+                elif comp.action == SyncAction.COPY_TO_LOCAL:
+                    action_result["direction"] = "cloud → local"
+                    action_result["size"] = comp.cloud_size
+                    
+                    if dry_run:
+                        action_result["success"] = True
+                        action_result["dry_run"] = True
+                    else:
+                        # Backup local file if it exists
+                        if comp.local_path and comp.local_path.exists():
+                            self.create_backup(comp.local_path, backup_dir, "local")
+                        
+                        # Copy to local
+                        success = self.copy_file(comp.cloud_path, local_dir / comp.filename)
+                        action_result["success"] = success
+                        
+                        if success:
+                            results["files_synced"] += 1
+                        else:
+                            results["errors"].append(f"Failed to copy {comp.filename} to local")
+                
+                elif comp.action == SyncAction.CONFLICT:
+                    action_result["direction"] = "conflict"
+                    results["conflicts"] += 1
+                    action_result["success"] = False
+                    action_result["needs_resolution"] = True
+                
+                elif comp.action == SyncAction.SKIP:
+                    action_result["direction"] = "skip"
+                    results["files_skipped"] += 1
+                    action_result["success"] = True
+                
+            except Exception as e:
+                action_result["success"] = False
+                action_result["error"] = str(e)
+                results["errors"].append(f"Error processing {comp.filename}: {e}")
+                results["success"] = False
+            
+            results["actions"].append(action_result)
+        
+        return results
+    
     def verify_disk_space(self, dest_dir: Path, required_bytes: int) -> bool:
         """Verify sufficient disk space is available
         
