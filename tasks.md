@@ -25,7 +25,7 @@
   - Handle missing/malformed config files gracefully
   - Implement config file writer
 
-- [ ] **Task 1.4**: Set up logging system
+- [x] **Task 1.4**: Set up logging system
   - Configure log levels (DEBUG, INFO, WARNING, ERROR)
   - Implement file logging with rotation
   - Implement console logging with verbosity control
@@ -334,7 +334,7 @@
 ## Progress Summary
 
 **Phase 1 - CLI Implementation**
-- Milestone 1: Project Setup & Core Infrastructure (3/4 tasks)
+- Milestone 1: Project Setup & Core Infrastructure (4/4 tasks) ✓
 - Milestone 2: Game Detection & Configuration (0/5 tasks)
 - Milestone 3: Sync Engine (0/5 tasks)
 - Milestone 4: Conflict Resolution (0/4 tasks)
@@ -342,7 +342,7 @@
 - Milestone 6: Testing & Documentation (0/5 tasks)
 - Milestone 7: Polish & Release (0/5 tasks)
 
-**Total Phase 1 Progress: 3/36 tasks completed**
+**Total Phase 1 Progress: 4/36 tasks completed**
 
 ---
 

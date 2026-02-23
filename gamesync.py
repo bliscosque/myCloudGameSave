@@ -11,7 +11,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.config_manager import ConfigManager
+from src.config_manager import ConfigManager, ConfigError
+from src.logger import init_logger, get_logger
 
 
 def cmd_init(args):
@@ -39,11 +40,50 @@ def cmd_init(args):
         sys.exit(1)
 
 
+def setup_logging(args):
+    """Set up logging based on config and arguments
+    
+    Args:
+        args: Command line arguments
+        
+    Returns:
+        ConfigManager instance or None if config doesn't exist
+    """
+    try:
+        config_mgr = ConfigManager()
+        
+        # Skip logging setup for init command if config doesn't exist
+        if not config_mgr.config_exists():
+            if args.command != 'init':
+                print("Configuration not initialized. Run 'init' command first.")
+                sys.exit(1)
+            return None
+        
+        # Load config and initialize logger
+        config = config_mgr.load_config()
+        log_level = config.get("general", {}).get("log_level", "info")
+        verbose = getattr(args, 'verbose', False)
+        
+        init_logger(config_mgr.logs_dir, log_level, verbose)
+        
+        return config_mgr
+        
+    except ConfigError as e:
+        print(f"Configuration error: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Cloud Game Save Synchronization Tool",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    
+    parser.add_argument('-v', '--verbose', action='store_true',
+                       help='Enable verbose output')
     
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
     
@@ -57,6 +97,14 @@ def main():
     if args.command is None:
         parser.print_help()
         return
+    
+    # Set up logging (except for init if config doesn't exist)
+    config_mgr = setup_logging(args)
+    
+    # Log command execution
+    if config_mgr:
+        logger = get_logger()
+        logger.info(f"Executing command: {args.command}")
     
     # Execute command
     args.func(args)
