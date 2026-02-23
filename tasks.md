@@ -99,24 +99,24 @@
 
 ### Milestone 4: Conflict Resolution
 
-- [ ] **Task 4.1**: Implement conflict detection
+- [x] **Task 4.1**: Implement conflict detection
   - Detect when both local and cloud files are newer than last sync
   - Detect size mismatches with same timestamp
   - Track conflicts in game configuration
 
-- [ ] **Task 4.2**: Implement conflict backup creation
+- [x] **Task 4.2**: Implement conflict backup creation
   - Create backups of both conflicting versions
   - Label backups clearly (local vs cloud)
   - Store conflict metadata
 
-- [ ] **Task 4.3**: Implement interactive conflict resolution
+- [x] **Task 4.3**: Implement interactive conflict resolution
   - Display conflict information to user
   - Show file details (size, timestamp, location)
   - Prompt user for choice (keep local, keep cloud, keep both)
   - Apply user's resolution choice
   - Update game configuration
 
-- [ ] **Task 4.4**: Implement conflict listing
+- [x] **Task 4.4**: Implement conflict listing
   - List all pending conflicts for a game
   - Show conflict details in readable format
   - Support resolving multiple conflicts in batch
@@ -338,12 +338,12 @@
 - Milestone 1: Project Setup & Core Infrastructure (4/4 tasks) ✓
 - Milestone 2: Game Detection & Configuration (5/5 tasks) ✓
 - Milestone 3: Sync Engine (5/5 tasks) ✓
-- Milestone 4: Conflict Resolution (0/4 tasks)
+- Milestone 4: Conflict Resolution (4/4 tasks) ✓
 - Milestone 5: CLI Interface (0/8 tasks)
 - Milestone 6: Testing & Documentation (0/5 tasks)
 - Milestone 7: Polish & Release (0/5 tasks)
 
-**Total Phase 1 Progress: 14/36 tasks completed**
+**Total Phase 1 Progress: 18/36 tasks completed**
 
 ---
 
