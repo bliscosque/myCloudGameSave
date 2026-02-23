@@ -152,7 +152,7 @@
   - Validate paths
   - Create game configuration file
 
-- [ ] **Task 5.6**: Implement `sync` command
+- [x] **Task 5.6**: Implement `sync` command
   - Sync specific game by ID
   - Sync all games with --all flag
   - Show progress during sync

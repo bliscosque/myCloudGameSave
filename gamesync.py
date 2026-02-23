@@ -342,6 +342,137 @@ def cmd_add(args):
         sys.exit(1)
 
 
+def cmd_sync(args):
+    """Synchronize game saves"""
+    from src.sync_engine import SyncEngine
+    from src.conflict_resolver import ConflictResolver, ResolutionStrategy
+    from datetime import datetime
+    
+    config_mgr = ConfigManager()
+    if not config_mgr.config_exists():
+        print("✗ Configuration not initialized. Run 'gamesync init' first.")
+        sys.exit(1)
+    
+    # Load global config
+    global_config = config_mgr.load_config()
+    cloud_directory = global_config.get('general', {}).get('cloud_directory')
+    
+    if not cloud_directory:
+        print("✗ Cloud directory not configured. Edit config and set 'cloud_directory'.")
+        sys.exit(1)
+    
+    cloud_dir = Path(cloud_directory)
+    if not cloud_dir.exists():
+        print(f"✗ Cloud directory does not exist: {cloud_dir}")
+        sys.exit(1)
+    
+    # Determine which games to sync
+    if args.all:
+        game_ids = config_mgr.list_games()
+        if not game_ids:
+            print("No games configured.")
+            sys.exit(1)
+    elif args.game_id:
+        game_ids = [args.game_id]
+    else:
+        print("✗ Specify a game ID or use --all to sync all games")
+        sys.exit(1)
+    
+    # Sync each game
+    sync_engine = SyncEngine()
+    total_synced = 0
+    total_conflicts = 0
+    total_errors = 0
+    
+    for game_id in game_ids:
+        try:
+            game_config = config_mgr.load_game_config(game_id)
+        except Exception as e:
+            print(f"✗ {game_id}: Failed to load config - {e}")
+            total_errors += 1
+            continue
+        
+        name = game_config.get('game', {}).get('name', game_id)
+        enabled = game_config.get('sync', {}).get('enabled', True)
+        
+        if not enabled:
+            print(f"⊘ {name}: Sync disabled, skipping")
+            continue
+        
+        print(f"\n{'='*60}")
+        print(f"Syncing: {name}")
+        print(f"{'='*60}")
+        
+        # Get paths
+        local_path = Path(game_config.get('paths', {}).get('local', ''))
+        backup_dir_name = game_config.get('game', {}).get('backup_dir_name', '')
+        game_cloud_dir = cloud_dir / backup_dir_name
+        backup_path = config_mgr.config_dir / "backups" / game_id
+        
+        if not local_path.exists():
+            print(f"✗ Local path does not exist: {local_path}")
+            total_errors += 1
+            continue
+        
+        # Create cloud directory if needed
+        game_cloud_dir.mkdir(parents=True, exist_ok=True)
+        backup_path.mkdir(parents=True, exist_ok=True)
+        
+        # Get last sync time
+        last_sync = game_config.get('sync', {}).get('last_sync', '')
+        
+        # Perform sync
+        results = sync_engine.sync_files(
+            local_path, 
+            game_cloud_dir, 
+            backup_path,
+            last_sync=last_sync if last_sync else None,
+            dry_run=args.dry_run
+        )
+        
+        # Display results
+        if args.dry_run:
+            print("\n[DRY RUN - No changes made]")
+        
+        for action in results['actions']:
+            filename = action['filename']
+            direction = action.get('direction', 'unknown')
+            
+            if action['action'] == 'conflict':
+                print(f"⚠ {filename}: CONFLICT")
+                total_conflicts += 1
+            elif action['action'] == 'skip':
+                if args.verbose:
+                    print(f"  {filename}: Up to date")
+            elif action.get('success'):
+                size = action.get('size', 0)
+                print(f"✓ {filename}: {direction} ({size} bytes)")
+                total_synced += 1
+            else:
+                error = action.get('error', 'Unknown error')
+                print(f"✗ {filename}: {error}")
+                total_errors += 1
+        
+        # Update last sync time if not dry run and successful
+        if not args.dry_run and results['success'] and results['conflicts'] == 0:
+            game_config['sync']['last_sync'] = datetime.now().isoformat()
+            game_config['metadata']['last_modified'] = datetime.now().isoformat()
+            try:
+                config_mgr.save_game_config(game_id, game_config)
+            except Exception as e:
+                print(f"⚠ Warning: Failed to update last_sync: {e}")
+        
+        print(f"\nSummary: {results['files_synced']} synced, {results['files_skipped']} skipped, {results['conflicts']} conflicts")
+    
+    # Overall summary
+    print(f"\n{'='*60}")
+    print(f"Overall: {total_synced} files synced, {total_conflicts} conflicts, {total_errors} errors")
+    print(f"{'='*60}")
+    
+    if total_conflicts > 0:
+        print("\n⚠ Conflicts detected. Run 'gamesync status' to review.")
+
+
 def setup_logging(args):
     """Set up logging based on config and arguments
     
@@ -411,6 +542,8 @@ def main():
         cmd_list(args)
     elif args.command == 'add':
         cmd_add(args)
+    elif args.command == 'sync':
+        cmd_sync(args)
     else:
         print(f"Command '{args.command}' not yet implemented")
 
