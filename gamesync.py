@@ -172,7 +172,7 @@ def cmd_detect(args):
     print(f"\n✓ Found {len(games)} non-Steam game(s):\n")
     
     for i, game in enumerate(games, 1):
-        game_id = detector.create_game_id(game['name'])
+        game_id = detector.create_game_id(game)
         backup_dir = detector.create_backup_dir_name(game)
         
         print(f"{i}. {game['name']}")

@@ -196,7 +196,7 @@ def test_game_config_creation():
     print(f"  Testing with: {game['name']}")
     
     # Create game ID
-    game_id = detector.create_game_id(game['name'])
+    game_id = detector.create_game_id(game)
     print(f"  Game ID: {game_id}")
     
     # Detect save locations

@@ -273,22 +273,16 @@ class GameDetector:
         # Fallback to game_id if no exe
         return self.create_game_id(game_info['name'])
     
-    def create_game_id(self, game_name: str) -> str:
-        """Create a game ID from game name
+    def create_game_id(self, game_info: Dict[str, Any]) -> str:
+        """Create a game ID from game exe (same as backup_dir_name)
         
         Args:
-            game_name: Game name
+            game_info: Game information dictionary with 'exe' key
             
         Returns:
-            Game ID (lowercase, alphanumeric with hyphens)
+            Game ID (lowercase exe name without extension)
         """
-        import re
-        # Convert to lowercase and replace spaces/special chars with hyphens
-        game_id = game_name.lower()
-        game_id = re.sub(r'[^\w\s-]', '', game_id)
-        game_id = re.sub(r'[-\s]+', '-', game_id)
-        game_id = game_id.strip('-')
-        return game_id
+        return self.create_backup_dir_name(game_info)
     
     def create_game_config(self, game_info: Dict[str, Any], save_locations: List[Path] = None) -> Dict[str, Any]:
         """Create game configuration from detected game info
@@ -300,7 +294,7 @@ class GameDetector:
         Returns:
             Game configuration dictionary
         """
-        game_id = self.create_game_id(game_info['name'])
+        game_id = self.create_game_id(game_info)
         backup_dir_name = self.create_backup_dir_name(game_info)
         
         # Use first save location if available, otherwise empty
@@ -355,7 +349,7 @@ class GameDetector:
             print("Warning: No config manager available")
             return False
         
-        game_id = self.create_game_id(game_info['name'])
+        game_id = self.create_game_id(game_info)
         
         # Check if config already exists
         if not overwrite:
