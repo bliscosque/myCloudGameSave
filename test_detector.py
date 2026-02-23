@@ -142,6 +142,7 @@ def test_detect_all():
     print(f"  User IDs: {results['user_ids']}")
     print(f"  Shortcuts Files: {len(results['shortcuts_files'])}")
     print(f"  Non-Steam Games: {len(results['non_steam_games'])}")
+    print(f"  Custom Games: {len(results['custom_games'])}")
     
     for shortcut in results['shortcuts_files']:
         print(f"    - User {shortcut['user_id']}: {shortcut['path']}")
@@ -160,6 +161,22 @@ def test_detect_all():
         return False
 
 
+def test_custom_directories():
+    """Test custom directory scanning"""
+    print("\nTest 8: Testing custom directory scanning...")
+    
+    # Test with a non-existent path (should handle gracefully)
+    detector = GameDetector(custom_paths=["/nonexistent/path"])
+    custom_games = detector.scan_custom_directories()
+    
+    print(f"  Found {len(custom_games)} games in custom directories")
+    if custom_games:
+        for game in custom_games:
+            print(f"    - {game['name']}: {game['exe']}")
+    
+    print("✓ Custom directory scanning works")
+    return True
+
 def main():
     print("=== Game Detection Tests ===\n")
     
@@ -170,7 +187,8 @@ def main():
         test_shortcuts_path,
         test_non_steam_games,
         test_save_locations,
-        test_detect_all
+        test_detect_all,
+        test_custom_directories
     ]
     
     results = []

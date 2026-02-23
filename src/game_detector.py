@@ -15,11 +15,12 @@ from .save_detector import SaveLocationDetector
 class GameDetector:
     """Detects Steam installation and non-Steam games"""
     
-    def __init__(self, os_type: str = None):
+    def __init__(self, os_type: str = None, custom_paths: List[str] = None):
         """Initialize game detector
         
         Args:
             os_type: Operating system type ("linux" or "windows"). Auto-detected if None.
+            custom_paths: List of custom game directory paths to scan
         """
         if os_type is None:
             system = platform.system().lower()
@@ -30,6 +31,7 @@ class GameDetector:
         self.userdata_path: Optional[Path] = None
         self.user_ids: List[str] = []
         self.save_detector = SaveLocationDetector(os_type)
+        self.custom_paths = [Path(p) for p in (custom_paths or [])]
     
     def detect_steam_path(self) -> Optional[Path]:
         """Detect Steam installation path
@@ -192,6 +194,47 @@ class GameDetector:
         
         return all_games
     
+    def scan_custom_directories(self) -> List[Dict[str, Any]]:
+        """Scan custom directories for game installations
+        
+        Returns:
+            List of detected game dictionaries
+        """
+        games = []
+        
+        for custom_path in self.custom_paths:
+            if not custom_path.exists():
+                continue
+            
+            try:
+                # Look for game executables in subdirectories
+                for item in custom_path.iterdir():
+                    if not item.is_dir():
+                        continue
+                    
+                    # Look for .exe files (game executables)
+                    exe_files = list(item.glob("*.exe"))
+                    if not exe_files:
+                        continue
+                    
+                    # Use the first exe as the game executable
+                    game_exe = exe_files[0]
+                    
+                    game_info = {
+                        'name': item.name,
+                        'exe': str(game_exe),
+                        'start_dir': str(item),
+                        'app_id': None,
+                        'source': 'custom_directory',
+                        'custom_path': str(custom_path)
+                    }
+                    
+                    games.append(game_info)
+            except PermissionError:
+                print(f"Warning: Permission denied accessing {custom_path}")
+        
+        return games
+    
     def detect_save_locations(self, game_info: Dict[str, Any]) -> List[Path]:
         """Detect potential save locations for a game
         
@@ -214,7 +257,8 @@ class GameDetector:
             "userdata_path": self.detect_userdata_path(),
             "user_ids": self.detect_user_ids(),
             "shortcuts_files": [],
-            "non_steam_games": []
+            "non_steam_games": [],
+            "custom_games": []
         }
         
         for user_id in self.user_ids:
@@ -230,6 +274,13 @@ class GameDetector:
         
         # Detect save locations for each game
         for game in results["non_steam_games"]:
+            game['potential_save_locations'] = self.detect_save_locations(game)
+        
+        # Scan custom directories
+        results["custom_games"] = self.scan_custom_directories()
+        
+        # Detect save locations for custom games
+        for game in results["custom_games"]:
             game['potential_save_locations'] = self.detect_save_locations(game)
         
         return results

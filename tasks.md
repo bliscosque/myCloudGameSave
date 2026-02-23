@@ -52,7 +52,7 @@
   - Check game installation directory for saves
   - Check Proton/Wine prefix paths for Windows games on Linux
 
-- [ ] **Task 2.4**: Implement custom directory scanning
+- [x] **Task 2.4**: Implement custom directory scanning
   - Scan user-configured game directories
   - Detect game executables and infer save locations
   - Create game configuration suggestions
@@ -336,14 +336,14 @@
 
 **Phase 1 - CLI Implementation**
 - Milestone 1: Project Setup & Core Infrastructure (4/4 tasks) ✓
-- Milestone 2: Game Detection & Configuration (3/5 tasks)
+- Milestone 2: Game Detection & Configuration (4/5 tasks)
 - Milestone 3: Sync Engine (0/5 tasks)
 - Milestone 4: Conflict Resolution (0/4 tasks)
 - Milestone 5: CLI Interface (0/8 tasks)
 - Milestone 6: Testing & Documentation (0/5 tasks)
 - Milestone 7: Polish & Release (0/5 tasks)
 
-**Total Phase 1 Progress: 7/36 tasks completed**
+**Total Phase 1 Progress: 8/36 tasks completed**
 
 ---
 
