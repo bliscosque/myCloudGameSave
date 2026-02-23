@@ -63,11 +63,12 @@ custom_paths = ["/mnt/games", "/opt/games", "C:\\Games"]
 id = "the-witcher-3"
 name = "The Witcher 3: Wild Hunt"
 platform = "steam"  # or "standalone"
+backup_dir_name = "witcher3"  # derived from exe name, used for cloud directory
 steam_app_id = "292030"  # optional
 
 [paths]
 local = "/home/user/.local/share/Steam/steamapps/compatdata/292030/pfx/drive_c/users/steamuser/My Documents/The Witcher 3/gamesaves"
-cloud = "the-witcher-3"  # relative to cloud_directory
+cloud = "witcher3"  # relative to cloud_directory, same as backup_dir_name
 
 [sync]
 enabled = true
@@ -78,6 +79,8 @@ last_sync = "2026-02-23T10:30:00Z"
 auto_detected = true
 last_modified = "2026-02-23T10:30:00Z"
 ```
+
+**Note**: The `backup_dir_name` is derived from the game's executable filename (lowercase, without extension). This ensures consistent cloud directory naming across different machines, even if the game_id differs.
 
 ### 2.2 Backup Naming Convention
 
@@ -216,7 +219,21 @@ For each file in local and cloud:
 └── .gitignore                   # Excludes config/ directory
 ```
 
+**Cloud Directory Structure**:
+```
+<cloud_directory>/               # e.g., /home/user/Seafile/My Games/
+├── witcher3/                    # backup_dir_name from exe (witcher3.exe)
+│   ├── save001.dat
+│   └── ...
+├── skyrim/                      # backup_dir_name from exe (skyrim.exe)
+│   ├── save001.dat
+│   └── ...
+└── ...
+```
+
 **Note**: Configuration is stored locally in the project directory under `config/<HOSTNAME>/` where HOSTNAME is the machine's hostname. This allows the same project to be used on multiple machines without configuration conflicts, while keeping all data private (git-ignored).
+
+The `backup_dir_name` field in each game config is derived from the executable filename (lowercase, no extension) and ensures consistent cloud directory naming across machines.
 
 ## 5. Technology Stack
 

@@ -250,6 +250,29 @@ class GameDetector:
         """
         return self.save_detector.find_save_directories(game_info, self.steam_path)
     
+    def create_backup_dir_name(self, game_info: Dict[str, Any]) -> str:
+        """Create backup directory name from exe filename
+        
+        Args:
+            game_info: Game information dictionary
+            
+        Returns:
+            Backup directory name (lowercase exe name without extension)
+        """
+        import os
+        exe_path = game_info.get('exe', '')
+        if exe_path:
+            # Extract filename from path and remove extension
+            exe_name = os.path.basename(exe_path)
+            # Remove extension and quotes
+            exe_name = exe_name.replace('"', '').replace("'", '')
+            name_without_ext = os.path.splitext(exe_name)[0]
+            # Convert to lowercase
+            return name_without_ext.lower()
+        
+        # Fallback to game_id if no exe
+        return self.create_game_id(game_info['name'])
+    
     def create_game_id(self, game_name: str) -> str:
         """Create a game ID from game name
         
@@ -278,6 +301,7 @@ class GameDetector:
             Game configuration dictionary
         """
         game_id = self.create_game_id(game_info['name'])
+        backup_dir_name = self.create_backup_dir_name(game_info)
         
         # Use first save location if available, otherwise empty
         local_path = str(save_locations[0]) if save_locations else ""
@@ -286,11 +310,12 @@ class GameDetector:
             "game": {
                 "id": game_id,
                 "name": game_info['name'],
-                "platform": game_info.get('source', 'steam')
+                "platform": game_info.get('source', 'steam'),
+                "backup_dir_name": backup_dir_name
             },
             "paths": {
                 "local": local_path,
-                "cloud": game_id  # relative to cloud_directory
+                "cloud": backup_dir_name  # Use backup_dir_name instead of game_id
             },
             "sync": {
                 "enabled": True,
