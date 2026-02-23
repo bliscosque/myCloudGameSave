@@ -66,7 +66,7 @@
 
 ### Milestone 3: Sync Engine
 
-- [ ] **Task 3.1**: Implement file comparison logic
+- [x] **Task 3.1**: Implement file comparison logic
   - Compare file timestamps (mtime)
   - Compare file sizes
   - Build list of files to sync (local → cloud, cloud → local)
@@ -337,13 +337,13 @@
 **Phase 1 - CLI Implementation**
 - Milestone 1: Project Setup & Core Infrastructure (4/4 tasks) ✓
 - Milestone 2: Game Detection & Configuration (5/5 tasks) ✓
-- Milestone 3: Sync Engine (0/5 tasks)
+- Milestone 3: Sync Engine (1/5 tasks)
 - Milestone 4: Conflict Resolution (0/4 tasks)
 - Milestone 5: CLI Interface (0/8 tasks)
 - Milestone 6: Testing & Documentation (0/5 tasks)
 - Milestone 7: Polish & Release (0/5 tasks)
 
-**Total Phase 1 Progress: 9/36 tasks completed**
+**Total Phase 1 Progress: 10/36 tasks completed**
 
 ---
 
