@@ -33,7 +33,7 @@
 
 ### Milestone 2: Game Detection & Configuration
 
-- [ ] **Task 2.1**: Implement Steam path detection
+- [x] **Task 2.1**: Implement Steam path detection
   - Detect Steam installation on Linux (~/.local/share/Steam)
   - Detect Steam installation on Windows (Program Files)
   - Find Steam userdata directory
@@ -336,14 +336,14 @@
 
 **Phase 1 - CLI Implementation**
 - Milestone 1: Project Setup & Core Infrastructure (4/4 tasks) ✓
-- Milestone 2: Game Detection & Configuration (0/5 tasks)
+- Milestone 2: Game Detection & Configuration (1/5 tasks)
 - Milestone 3: Sync Engine (0/5 tasks)
 - Milestone 4: Conflict Resolution (0/4 tasks)
 - Milestone 5: CLI Interface (0/8 tasks)
 - Milestone 6: Testing & Documentation (0/5 tasks)
 - Milestone 7: Polish & Release (0/5 tasks)
 
-**Total Phase 1 Progress: 4/36 tasks completed**
+**Total Phase 1 Progress: 5/36 tasks completed**
 
 ---
 
