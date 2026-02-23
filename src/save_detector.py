@@ -190,15 +190,10 @@ class SaveLocationDetector:
                 
                 for loc in prefix_locations:
                     if loc.exists():
-                        # Look for game-specific subdirectories (non-system dirs)
+                        # Look for game-specific subdirectories
                         game_subdirs = self._find_game_subdirs(loc, clean_name)
                         if game_subdirs:
                             candidates.extend(game_subdirs)
-                        else:
-                            # If no game-specific subdirs found, add the base location
-                            # but only for AppData locations (most common for saves)
-                            if 'AppData' in str(loc):
-                                candidates.append(loc)
         
         # Check game installation directory
         game_dir = self.check_game_directory(game_info)
@@ -232,12 +227,13 @@ class SaveLocationDetector:
         clean = ' '.join(clean.split())
         return clean
     
-    def _find_game_subdirs(self, base_path: Path, game_name: str) -> List[Path]:
+    def _find_game_subdirs(self, base_path: Path, game_name: str, max_depth: int = 3) -> List[Path]:
         """Find subdirectories matching game name
         
         Args:
             base_path: Base directory to search
             game_name: Game name to match
+            max_depth: Maximum depth to search (default 3)
             
         Returns:
             List of matching directories
@@ -248,20 +244,95 @@ class SaveLocationDetector:
         matches = []
         game_name_lower = game_name.lower()
         
+        # Create variations and extract key words from game name
+        game_words = [word for word in game_name_lower.split() if len(word) > 3]
+        game_variations = [
+            game_name_lower,
+            game_name_lower.replace(' ', ''),
+            game_name_lower.replace(' ', '-'),
+            game_name_lower.replace("'", ''),
+        ]
+        
+        def search_recursive(path: Path, depth: int = 0):
+            if depth > max_depth:
+                return
+            
+            try:
+                for item in path.iterdir():
+                    if not item.is_dir():
+                        continue
+                    
+                    # Skip system directories
+                    if item.name in ['Microsoft', 'Temp', 'temp', 'Cache', 'cache']:
+                        continue
+                    
+                    item_name_lower = item.name.lower()
+                    
+                    # Check exact or partial matches with variations
+                    matched = False
+                    for variation in game_variations:
+                        if variation and (variation in item_name_lower or item_name_lower in variation):
+                            matched = True
+                            break
+                    
+                    # Also check if any significant word from game name is in directory name
+                    if not matched and game_words:
+                        for word in game_words:
+                            if word in item_name_lower:
+                                matched = True
+                                break
+                    
+                    if matched:
+                        # Check if this directory or subdirectories contain saves
+                        save_dirs = self._find_save_subdirs(item)
+                        if save_dirs:
+                            matches.extend(save_dirs)
+                        else:
+                            # Add the directory itself if no specific save subdirs found
+                            matches.append(item)
+                    else:
+                        # Continue searching deeper
+                        search_recursive(item, depth + 1)
+            except PermissionError:
+                pass
+        
+        search_recursive(base_path)
+        return matches
+    
+    def _find_save_subdirs(self, game_dir: Path) -> List[Path]:
+        """Find save-related subdirectories within a game directory
+        
+        Args:
+            game_dir: Game directory to search
+            
+        Returns:
+            List of save directories
+        """
+        save_dirs = []
+        save_keywords = ['save', 'saves', 'savegame', 'savegames', 'savedata', 'saved']
+        
         try:
-            for item in base_path.iterdir():
+            # Check immediate subdirectories
+            for item in game_dir.iterdir():
                 if not item.is_dir():
                     continue
                 
                 item_name_lower = item.name.lower()
                 
-                # Exact match
-                if item_name_lower == game_name_lower:
-                    matches.append(item)
-                # Partial match (game name in directory name)
-                elif game_name_lower in item_name_lower or item_name_lower in game_name_lower:
-                    matches.append(item)
+                # Check if directory name suggests it contains saves
+                if any(keyword in item_name_lower for keyword in save_keywords):
+                    # Check one level deeper for more specific save dirs
+                    try:
+                        for subitem in item.iterdir():
+                            if subitem.is_dir() and any(kw in subitem.name.lower() for kw in save_keywords):
+                                save_dirs.append(subitem)
+                        
+                        # If no deeper save dirs found, add this one
+                        if not save_dirs:
+                            save_dirs.append(item)
+                    except PermissionError:
+                        save_dirs.append(item)
         except PermissionError:
             pass
         
-        return matches
+        return save_dirs
