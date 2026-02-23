@@ -115,12 +115,27 @@ class SaveLocationDetector:
         if not app_id:
             return None
         
-        # Check compatdata directory
+        # For non-Steam games, the app_id is very large (> 2^32)
+        # We need to check compatdata directory
         compatdata = steam_path / "steamapps" / "compatdata" / str(app_id)
         if compatdata.exists():
             prefix = compatdata / "pfx" / "drive_c"
             if prefix.exists():
                 return prefix
+        
+        # Also check if the game is using a custom prefix path
+        # Sometimes non-Steam games use the start_dir as a hint
+        start_dir = game_info.get('start_dir', '')
+        if start_dir and 'drive_c' in start_dir:
+            # Extract the prefix path
+            parts = Path(start_dir).parts
+            try:
+                drive_c_index = parts.index('drive_c')
+                prefix_path = Path(*parts[:drive_c_index]) / 'drive_c'
+                if prefix_path.exists():
+                    return prefix_path
+            except (ValueError, IndexError):
+                pass
         
         return None
     
@@ -159,24 +174,31 @@ class SaveLocationDetector:
         # Clean game name for directory matching
         clean_name = self._clean_game_name(game_name)
         
-        # Check Proton prefix (Linux only)
-        if steam_path and self.os_type == "linux":
+        # Check Proton prefix (Linux only) - PRIORITY for non-Steam games
+        if self.os_type == "linux":
             proton_prefix = self.check_proton_prefix(game_info, steam_path)
             if proton_prefix:
                 # Check common Windows save locations in prefix
                 prefix_locations = [
+                    proton_prefix / "users" / "steamuser" / "AppData" / "Local",
+                    proton_prefix / "users" / "steamuser" / "AppData" / "Roaming",
+                    proton_prefix / "users" / "steamuser" / "AppData" / "LocalLow",
                     proton_prefix / "users" / "steamuser" / "Documents",
                     proton_prefix / "users" / "steamuser" / "Documents" / "My Games",
-                    proton_prefix / "users" / "steamuser" / "AppData" / "Roaming",
-                    proton_prefix / "users" / "steamuser" / "AppData" / "Local",
-                    proton_prefix / "users" / "steamuser" / "AppData" / "LocalLow",
                     proton_prefix / "users" / "steamuser" / "Saved Games",
                 ]
                 
                 for loc in prefix_locations:
                     if loc.exists():
-                        # Look for game-specific subdirectories
-                        candidates.extend(self._find_game_subdirs(loc, clean_name))
+                        # Look for game-specific subdirectories (non-system dirs)
+                        game_subdirs = self._find_game_subdirs(loc, clean_name)
+                        if game_subdirs:
+                            candidates.extend(game_subdirs)
+                        else:
+                            # If no game-specific subdirs found, add the base location
+                            # but only for AppData locations (most common for saves)
+                            if 'AppData' in str(loc):
+                                candidates.append(loc)
         
         # Check game installation directory
         game_dir = self.check_game_directory(game_info)
@@ -188,13 +210,13 @@ class SaveLocationDetector:
                 if potential.exists():
                     candidates.append(potential)
         
-        # Check common OS save locations
-        for base_loc in self.get_common_save_locations():
-            candidates.extend(self._find_game_subdirs(base_loc, clean_name))
+        # Check common OS save locations (lower priority for Proton games)
+        if not candidates or self.os_type != "linux":
+            for base_loc in self.get_common_save_locations():
+                candidates.extend(self._find_game_subdirs(base_loc, clean_name))
         
         # Remove duplicates and return
-        return list(set(candidates))
-    
+        return list(set(candidates))    
     def _clean_game_name(self, name: str) -> str:
         """Clean game name for directory matching
         
