@@ -39,7 +39,7 @@
   - Find Steam userdata directory
   - Handle multiple Steam user accounts
 
-- [ ] **Task 2.2**: Implement non-Steam game detection
+- [x] **Task 2.2**: Implement non-Steam game detection
   - Parse shortcuts.vdf file (binary VDF format)
   - Extract non-Steam game information (AppID, name, exe path)
   - Build list of manually added non-Steam games
@@ -336,14 +336,14 @@
 
 **Phase 1 - CLI Implementation**
 - Milestone 1: Project Setup & Core Infrastructure (4/4 tasks) ✓
-- Milestone 2: Game Detection & Configuration (1/5 tasks)
+- Milestone 2: Game Detection & Configuration (2/5 tasks)
 - Milestone 3: Sync Engine (0/5 tasks)
 - Milestone 4: Conflict Resolution (0/4 tasks)
 - Milestone 5: CLI Interface (0/8 tasks)
 - Milestone 6: Testing & Documentation (0/5 tasks)
 - Milestone 7: Polish & Release (0/5 tasks)
 
-**Total Phase 1 Progress: 5/36 tasks completed**
+**Total Phase 1 Progress: 6/36 tasks completed**
 
 ---
 

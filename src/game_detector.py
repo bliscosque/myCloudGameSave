@@ -6,7 +6,9 @@ Handles detection of Steam installation and non-Steam games
 import os
 import platform
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
+
+from .vdf_parser import ShortcutsParser
 
 
 class GameDetector:
@@ -152,6 +154,42 @@ class GameDetector:
         
         return None
     
+    def detect_non_steam_games(self, user_id: str = None) -> List[Dict[str, Any]]:
+        """Detect non-Steam games from shortcuts.vdf
+        
+        Args:
+            user_id: Specific user ID to check. If None, checks all users.
+            
+        Returns:
+            List of non-Steam game dictionaries
+        """
+        if user_id:
+            user_ids = [user_id]
+        else:
+            user_ids = self.detect_user_ids()
+        
+        all_games = []
+        
+        for uid in user_ids:
+            shortcuts_path = self.get_shortcuts_path(uid)
+            if not shortcuts_path:
+                continue
+            
+            try:
+                parser = ShortcutsParser(shortcuts_path)
+                games = parser.parse()
+                
+                # Add user_id to each game
+                for game in games:
+                    game['user_id'] = uid
+                
+                all_games.extend(games)
+            except Exception as e:
+                # Log error but continue with other users
+                print(f"Warning: Failed to parse shortcuts for user {uid}: {e}")
+        
+        return all_games
+    
     def detect_all(self) -> dict:
         """Run all detection steps and return summary
         
@@ -162,7 +200,8 @@ class GameDetector:
             "steam_path": self.detect_steam_path(),
             "userdata_path": self.detect_userdata_path(),
             "user_ids": self.detect_user_ids(),
-            "shortcuts_files": []
+            "shortcuts_files": [],
+            "non_steam_games": []
         }
         
         for user_id in self.user_ids:
@@ -172,5 +211,8 @@ class GameDetector:
                     "user_id": user_id,
                     "path": shortcuts
                 })
+        
+        # Detect non-Steam games
+        results["non_steam_games"] = self.detect_non_steam_games()
         
         return results

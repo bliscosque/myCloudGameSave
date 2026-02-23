@@ -80,9 +80,30 @@ def test_shortcuts_path():
     return found_any or len(detector.user_ids) == 0
 
 
+def test_non_steam_games():
+    """Test non-Steam game detection"""
+    print("\nTest 5: Detecting non-Steam games...")
+    
+    detector = GameDetector()
+    games = detector.detect_non_steam_games()
+    
+    if games:
+        print(f"✓ Found {len(games)} non-Steam game(s):")
+        for i, game in enumerate(games, 1):
+            print(f"  {i}. {game['name']}")
+            print(f"     Exe: {game['exe']}")
+            print(f"     Start Dir: {game['start_dir']}")
+            print(f"     App ID: {game['app_id']}")
+            print(f"     User ID: {game['user_id']}")
+        return True
+    else:
+        print("  No non-Steam games found (this is normal if none added)")
+        return True
+
+
 def test_detect_all():
     """Test complete detection"""
-    print("\nTest 5: Running complete detection...")
+    print("\nTest 6: Running complete detection...")
     
     detector = GameDetector()
     results = detector.detect_all()
@@ -92,6 +113,7 @@ def test_detect_all():
     print(f"  Userdata Path: {results['userdata_path']}")
     print(f"  User IDs: {results['user_ids']}")
     print(f"  Shortcuts Files: {len(results['shortcuts_files'])}")
+    print(f"  Non-Steam Games: {len(results['non_steam_games'])}")
     
     for shortcut in results['shortcuts_files']:
         print(f"    - User {shortcut['user_id']}: {shortcut['path']}")
@@ -112,6 +134,7 @@ def main():
         test_userdata_detection,
         test_user_ids,
         test_shortcuts_path,
+        test_non_steam_games,
         test_detect_all
     ]
     
