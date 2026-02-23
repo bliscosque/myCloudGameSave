@@ -60,15 +60,15 @@ custom_paths = ["/mnt/games", "/opt/games", "C:\\Games"]
 #### Per-Game Configuration (`config/<HOSTNAME>/games/<game-id>.toml`)
 ```toml
 [game]
-id = "the-witcher-3"
+id = "witcher3"  # derived from witcher3.exe
 name = "The Witcher 3: Wild Hunt"
 platform = "steam"  # or "standalone"
-backup_dir_name = "witcher3"  # derived from exe name, used for cloud directory
+backup_dir_name = "witcher3"  # same as id, derived from exe name
 steam_app_id = "292030"  # optional
 
 [paths]
 local = "/home/user/.local/share/Steam/steamapps/compatdata/292030/pfx/drive_c/users/steamuser/My Documents/The Witcher 3/gamesaves"
-cloud = "witcher3"  # relative to cloud_directory, same as backup_dir_name
+cloud = "witcher3"  # relative to cloud_directory, same as id and backup_dir_name
 
 [sync]
 enabled = true
@@ -80,7 +80,16 @@ auto_detected = true
 last_modified = "2026-02-23T10:30:00Z"
 ```
 
-**Note**: The `backup_dir_name` is derived from the game's executable filename (lowercase, without extension). This ensures consistent cloud directory naming across different machines, even if the game_id differs.
+**Design Decision - Game ID Naming**: Both `game_id` and `backup_dir_name` are derived from the game's executable filename (lowercase, without extension). This ensures:
+- Consistent naming across different machines
+- Simple, predictable identifiers
+- No conflicts between game_id and cloud directory names
+- Easy to understand and remember
+
+Examples:
+- `HellbladeGame.exe` → `hellbladegame`
+- `Hellblade2.exe` → `hellblade2`
+- `METAPHOR.exe` → `metaphor`
 
 ### 2.2 Backup Naming Convention
 
@@ -233,7 +242,7 @@ For each file in local and cloud:
 
 **Note**: Configuration is stored locally in the project directory under `config/<HOSTNAME>/` where HOSTNAME is the machine's hostname. This allows the same project to be used on multiple machines without configuration conflicts, while keeping all data private (git-ignored).
 
-The `backup_dir_name` field in each game config is derived from the executable filename (lowercase, no extension) and ensures consistent cloud directory naming across machines.
+The `game_id` and `backup_dir_name` fields in each game config are both derived from the executable filename (lowercase, no extension) and ensure consistent naming across machines.
 
 ## 5. Technology Stack
 
