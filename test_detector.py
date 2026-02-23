@@ -177,6 +177,56 @@ def test_custom_directories():
     print("✓ Custom directory scanning works")
     return True
 
+
+def test_game_config_creation():
+    """Test game configuration creation and saving"""
+    print("\nTest 9: Testing game configuration creation...")
+    
+    from src.config_manager import ConfigManager
+    
+    config_mgr = ConfigManager()
+    detector = GameDetector(config_manager=config_mgr)
+    
+    games = detector.detect_non_steam_games()
+    if not games:
+        print("  No games to test (skipping)")
+        return True
+    
+    game = games[0]
+    print(f"  Testing with: {game['name']}")
+    
+    # Create game ID
+    game_id = detector.create_game_id(game['name'])
+    print(f"  Game ID: {game_id}")
+    
+    # Detect save locations
+    save_locs = detector.detect_save_locations(game)
+    
+    # Create config
+    config = detector.create_game_config(game, save_locs)
+    print(f"  Config created: {config['game']['name']}")
+    print(f"  Local path: {config['paths']['local'][:50]}...")
+    
+    # Save config (with overwrite to ensure test works)
+    success = detector.save_game_config(game, save_locs, overwrite=True)
+    if success:
+        print(f"  ✓ Config saved to games/{game_id}.toml")
+        
+        # Verify it can be loaded
+        loaded = config_mgr.load_game_config(game_id)
+        if loaded['game']['name'] == game['name']:
+            print("  ✓ Config verified")
+            
+            # Test that it skips existing configs by default
+            skipped = not detector.save_game_config(game, save_locs, overwrite=False)
+            if skipped:
+                print("  ✓ Existing configs protected (not overwritten)")
+            
+            return True
+    
+    print("  ✗ Failed to save/verify config")
+    return False
+
 def main():
     print("=== Game Detection Tests ===\n")
     
@@ -188,7 +238,8 @@ def main():
         test_non_steam_games,
         test_save_locations,
         test_detect_all,
-        test_custom_directories
+        test_custom_directories,
+        test_game_config_creation
     ]
     
     results = []

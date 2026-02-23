@@ -57,7 +57,7 @@
   - Detect game executables and infer save locations
   - Create game configuration suggestions
 
-- [ ] **Task 2.5**: Implement per-game configuration management
+- [x] **Task 2.5**: Implement per-game configuration management
   - Create game configuration file template
   - Save detected games as individual config files
   - Load game configurations from files
@@ -336,14 +336,14 @@
 
 **Phase 1 - CLI Implementation**
 - Milestone 1: Project Setup & Core Infrastructure (4/4 tasks) ✓
-- Milestone 2: Game Detection & Configuration (4/5 tasks)
+- Milestone 2: Game Detection & Configuration (5/5 tasks) ✓
 - Milestone 3: Sync Engine (0/5 tasks)
 - Milestone 4: Conflict Resolution (0/4 tasks)
 - Milestone 5: CLI Interface (0/8 tasks)
 - Milestone 6: Testing & Documentation (0/5 tasks)
 - Milestone 7: Polish & Release (0/5 tasks)
 
-**Total Phase 1 Progress: 8/36 tasks completed**
+**Total Phase 1 Progress: 9/36 tasks completed**
 
 ---
 
