@@ -151,7 +151,7 @@ def cmd_detect(args):
         sys.exit(1)
     
     print("Detecting non-Steam games from Steam library...")
-    detector = GameDetector()
+    detector = GameDetector(config_manager=config_mgr)
     games = detector.detect_non_steam_games()
     
     if not games:
@@ -184,10 +184,8 @@ def cmd_detect(args):
     skipped = 0
     
     for game in games:
-        game_id = detector.create_game_id(game['name'])
         save_locations = detector.detect_save_locations(game)
-        game_config = detector.create_game_config(game, save_locations)
-        success = detector.save_game_config(game_id, game_config, overwrite=False)
+        success = detector.save_game_config(game, save_locations, overwrite=False)
         
         if success:
             print(f"✓ Added: {game['name']}")
