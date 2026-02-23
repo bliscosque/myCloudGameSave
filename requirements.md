@@ -96,6 +96,10 @@ A multi-platform command-line tool that synchronizes game save files between loc
 - **FE-4**: Support for additional game launchers (Epic, GOG, etc.)
 - **FE-5**: Sync scheduling within the tool
 - **FE-6**: Cloud provider integration (direct API access without mounting)
+- **FE-7**: Recursive directory sync (currently only syncs files in top-level directory)
+  - Research: Determine if most games store saves in flat structure or nested directories
+  - If nested is common, implement recursive sync with proper conflict handling
+  - Consider per-game configuration option for recursive vs flat sync
 
 ## 5. Constraints
 
