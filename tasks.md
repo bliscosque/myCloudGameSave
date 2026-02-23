@@ -165,10 +165,11 @@
   - Show pending conflicts
   - Display last sync time
 
-- [ ] **Task 5.8**: Implement `resolve` command
-  - List conflicts for specified game
-  - Interactive conflict resolution
-  - Apply resolutions and update config
+- [x] **Task 5.8**: Implement interactive conflict resolution in sync command
+  - Detect conflicts during sync
+  - Prompt user for resolution (keep local, keep cloud, keep both)
+  - Apply resolution and continue sync
+  - Skip conflict resolution if --force flag is used
 
 ### Milestone 6: Testing & Documentation
 
@@ -339,11 +340,11 @@
 - Milestone 2: Game Detection & Configuration (5/5 tasks) ✓
 - Milestone 3: Sync Engine (5/5 tasks) ✓
 - Milestone 4: Conflict Resolution (4/4 tasks) ✓
-- Milestone 5: CLI Interface (0/8 tasks)
+- Milestone 5: CLI Interface (8/8 tasks) ✓
 - Milestone 6: Testing & Documentation (0/5 tasks)
 - Milestone 7: Polish & Release (0/5 tasks)
 
-**Total Phase 1 Progress: 18/36 tasks completed**
+**Total Phase 1 Progress: 26/36 tasks completed**
 
 ---
 

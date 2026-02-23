@@ -421,6 +421,74 @@ def cmd_sync(args):
         # Get last sync time
         last_sync = game_config.get('sync', {}).get('last_sync', '')
         
+        # Check for conflicts first (unless --force)
+        conflict_resolver = ConflictResolver()
+        if not args.force:
+            comparisons = sync_engine.compare_directories(
+                local_path,
+                game_cloud_dir,
+                last_sync if last_sync else None
+            )
+            
+            conflicts = [c for c in comparisons if c.action.value == 'conflict']
+            
+            if conflicts and not args.dry_run:
+                print(f"\n⚠ Found {len(conflicts)} conflict(s):")
+                for conflict in conflicts:
+                    print(f"  - {conflict.filename}")
+                
+                print("\nResolving conflicts...")
+                for conflict in conflicts:
+                    info = conflict_resolver.get_conflict_info(conflict.local_path, conflict.cloud_path)
+                    
+                    print(f"\n{'='*60}")
+                    print(f"Conflict: {info['filename']}")
+                    print(f"{'='*60}")
+                    print(f"Local:  {info['local']['size']} bytes, modified {info['local']['modified']}")
+                    print(f"Cloud:  {info['cloud']['size']} bytes, modified {info['cloud']['modified']}")
+                    print("\nChoose resolution:")
+                    print("  1. Keep local (copy local → cloud)")
+                    print("  2. Keep cloud (copy cloud → local)")
+                    print("  3. Keep both (rename with suffixes)")
+                    print("  4. Skip this file")
+                    
+                    while True:
+                        choice = input("\nYour choice [1-4]: ").strip()
+                        if choice in ['1', '2', '3', '4']:
+                            break
+                        print("Invalid choice. Please enter 1, 2, 3, or 4.")
+                    
+                    if choice == '1':
+                        conflict_resolver.resolve_conflict(
+                            conflict.local_path,
+                            conflict.cloud_path,
+                            ResolutionStrategy.KEEP_LOCAL,
+                            backup_path
+                        )
+                        print(f"✓ Resolved: Kept local version")
+                    elif choice == '2':
+                        conflict_resolver.resolve_conflict(
+                            conflict.local_path,
+                            conflict.cloud_path,
+                            ResolutionStrategy.KEEP_CLOUD,
+                            backup_path
+                        )
+                        print(f"✓ Resolved: Kept cloud version")
+                    elif choice == '3':
+                        conflict_resolver.resolve_conflict(
+                            conflict.local_path,
+                            conflict.cloud_path,
+                            ResolutionStrategy.KEEP_BOTH,
+                            backup_path
+                        )
+                        print(f"✓ Resolved: Kept both versions")
+                    else:
+                        print(f"⊘ Skipped: {conflict.filename}")
+                
+                print(f"\n{'='*60}")
+                print("All conflicts resolved. Continuing with sync...")
+                print(f"{'='*60}\n")
+        
         # Perform sync
         results = sync_engine.sync_files(
             local_path, 

@@ -7,7 +7,7 @@
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                     CLI Interface                        │
-│  (commands: sync, list, add, detect, status, resolve)   │
+│  (commands: sync, list, add, detect, status, init)      │
 └────────────────────┬────────────────────────────────────┘
                      │
 ┌────────────────────▼────────────────────────────────────┐
@@ -34,7 +34,7 @@
 **CLI Interface**: Parse commands, display output, handle user interaction
 **Config Manager**: Read/write configuration files, validate settings
 **Game Detector**: Auto-detect games from Steam and common directories
-**Conflict Resolver**: Detect conflicts, create backups, prompt user
+**Conflict Resolver**: Detect conflicts, create backups, prompt user during sync
 **Sync Engine**: Compare timestamps, copy files, manage sync operations
 
 ## 2. Data Model
@@ -104,12 +104,11 @@ Example: save001.dat.20260223-103045.local.backup
 
 **Commands**:
 - `gamesync list` - List all configured games
-- `gamesync sync <game-id>` - Sync specific game
+- `gamesync sync <game-id>` - Sync specific game (prompts for conflict resolution)
 - `gamesync sync --all` - Sync all enabled games
 - `gamesync add <game-id>` - Manually add game configuration
 - `gamesync detect` - Auto-detect games and create configs
 - `gamesync status [game-id]` - Show sync status
-- `gamesync resolve <game-id>` - Resolve pending conflicts
 - `gamesync init` - Initialize configuration directory
 
 **Options**:
@@ -179,7 +178,7 @@ For each file in local and cloud:
      b. If local newer → copy to cloud
      c. If cloud newer → copy to local
      d. If same timestamp → skip
-     e. If conflict detected → invoke conflict resolver
+     e. If conflict detected → prompt user for resolution (keep local/cloud/both)
 ```
 
 **Key Functions**:
@@ -203,9 +202,8 @@ For each file in local and cloud:
 
 **Key Functions**:
 - `detect_conflict(local_file, cloud_file, last_sync)` - Check for conflicts
-- `prompt_resolution(conflict_info)` - Interactive prompt
+- `prompt_resolution(conflict_info)` - Interactive prompt during sync
 - `resolve_conflict(choice, conflict_info)` - Apply resolution
-- `list_pending_conflicts(game_id)` - Show unresolved conflicts
 
 ## 4. File System Layout
 
