@@ -299,40 +299,66 @@ class SaveLocationDetector:
         search_recursive(base_path)
         return matches
     
-    def _find_save_subdirs(self, game_dir: Path) -> List[Path]:
-        """Find save-related subdirectories within a game directory
+    def _find_save_subdirs(self, game_dir: Path, max_depth: int = 3) -> List[Path]:
+        """Find subdirectories containing actual save files
         
         Args:
             game_dir: Game directory to search
+            max_depth: Maximum depth to search for save files
             
         Returns:
-            List of save directories
+            List of directories containing save files (prefers parent dirs with most files)
         """
-        save_dirs = []
+        save_dirs = {}  # path -> file count
+        save_extensions = ['.sav', '.dat', '.save', '.bin', '.slot']
         save_keywords = ['save', 'saves', 'savegame', 'savegames', 'savedata', 'saved']
         
-        try:
-            # Check immediate subdirectories
-            for item in game_dir.iterdir():
-                if not item.is_dir():
-                    continue
+        def search_for_saves(path: Path, depth: int = 0):
+            if depth > max_depth:
+                return
+            
+            try:
+                has_save_files = False
+                save_file_count = 0
                 
-                item_name_lower = item.name.lower()
+                for item in path.iterdir():
+                    if item.is_file():
+                        # Check if it's a save file by extension or name
+                        if any(item.name.lower().endswith(ext) for ext in save_extensions):
+                            has_save_files = True
+                            save_file_count += 1
+                        elif any(kw in item.name.lower() for kw in save_keywords):
+                            has_save_files = True
+                            save_file_count += 1
+                    elif item.is_dir():
+                        # Skip system directories
+                        if item.name not in ['Microsoft', 'Temp', 'temp', 'Cache', 'cache', '__pycache__']:
+                            search_for_saves(item, depth + 1)
                 
-                # Check if directory name suggests it contains saves
-                if any(keyword in item_name_lower for keyword in save_keywords):
-                    # Check one level deeper for more specific save dirs
-                    try:
-                        for subitem in item.iterdir():
-                            if subitem.is_dir() and any(kw in subitem.name.lower() for kw in save_keywords):
-                                save_dirs.append(subitem)
-                        
-                        # If no deeper save dirs found, add this one
-                        if not save_dirs:
-                            save_dirs.append(item)
-                    except PermissionError:
-                        save_dirs.append(item)
-        except PermissionError:
-            pass
+                if has_save_files:
+                    save_dirs[path] = save_file_count
+                    
+            except PermissionError:
+                pass
         
-        return save_dirs
+        search_for_saves(game_dir)
+        
+        # Return only parent directories (avoid returning both parent and child)
+        if save_dirs:
+            # Sort by file count descending
+            sorted_dirs = sorted(save_dirs.items(), key=lambda x: x[1], reverse=True)
+            
+            # Keep only the shallowest directory in each hierarchy
+            result = []
+            for path, count in sorted_dirs:
+                # Check if any existing result is a parent of this path
+                has_parent = any(p in path.parents for p in result)
+                
+                if not has_parent:
+                    # Remove any children of this path from results
+                    result = [p for p in result if path not in p.parents]
+                    result.append(path)
+            
+            return result
+        
+        return []
