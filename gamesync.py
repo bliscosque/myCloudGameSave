@@ -202,6 +202,50 @@ def cmd_detect(args):
         print("3. Run 'gamesync sync --all' to synchronize")
 
 
+def cmd_list(args):
+    """List all configured games"""
+    config_mgr = ConfigManager()
+    if not config_mgr.config_exists():
+        print("✗ Configuration not initialized. Run 'gamesync init' first.")
+        sys.exit(1)
+    
+    games = config_mgr.list_games()
+    
+    if not games:
+        print("No games configured.")
+        print("\nRun 'gamesync detect' to find games automatically.")
+        return
+    
+    print(f"Configured games ({len(games)}):\n")
+    
+    for game_id in sorted(games):
+        try:
+            config = config_mgr.load_game_config(game_id)
+            name = config.get('game', {}).get('name', game_id)
+            enabled = config.get('sync', {}).get('enabled', True)
+            last_sync = config.get('sync', {}).get('last_sync', '')
+            
+            status = "✓" if enabled else "⊘"
+            print(f"{status} {name}")
+            print(f"  ID: {game_id}")
+            
+            if last_sync:
+                print(f"  Last sync: {last_sync}")
+            else:
+                print(f"  Last sync: Never")
+            
+            if args.verbose:
+                local_path = config.get('paths', {}).get('local', '')
+                backup_dir = config.get('game', {}).get('backup_dir_name', '')
+                print(f"  Local: {local_path}")
+                print(f"  Cloud: {backup_dir}")
+            
+            print()
+            
+        except Exception as e:
+            print(f"✗ {game_id}: Error loading config - {e}\n")
+
+
 def setup_logging(args):
     """Set up logging based on config and arguments
     
@@ -267,6 +311,8 @@ def main():
         cmd_init(args)
     elif args.command == 'detect':
         cmd_detect(args)
+    elif args.command == 'list':
+        cmd_list(args)
     else:
         print(f"Command '{args.command}' not yet implemented")
 

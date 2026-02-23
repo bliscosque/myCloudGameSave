@@ -140,7 +140,7 @@
   - Prompt user to confirm which games to add
   - Create game configuration files
 
-- [ ] **Task 5.4**: Implement `list` command
+- [x] **Task 5.4**: Implement `list` command
   - List all configured games
   - Display game ID, name, and status
   - Show last sync time
