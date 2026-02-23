@@ -4,6 +4,7 @@ Test script for sync engine
 """
 
 import sys
+import os
 import tempfile
 import time
 from pathlib import Path
@@ -185,6 +186,89 @@ def test_sync_summary():
         return True
 
 
+def test_copy_file():
+    """Test file copying"""
+    print("\nTest 7: File copying...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        source_dir = Path(tmpdir) / "source"
+        dest_dir = Path(tmpdir) / "dest"
+        source_dir.mkdir()
+        
+        # Create source file
+        source_file = source_dir / "test.dat"
+        source_file.write_text("test data")
+        original_mtime = source_file.stat().st_mtime
+        
+        # Copy file
+        dest_file = dest_dir / "test.dat"
+        engine = SyncEngine()
+        success = engine.copy_file(source_file, dest_file)
+        
+        assert success
+        assert dest_file.exists()
+        assert dest_file.read_text() == "test data"
+        
+        # Check timestamp preserved
+        dest_mtime = dest_file.stat().st_mtime
+        assert abs(dest_mtime - original_mtime) < 0.01
+        
+        print("  ✓ File copied successfully with timestamp preserved")
+        return True
+
+
+def test_copy_file_permissions():
+    """Test file permission handling"""
+    print("\nTest 8: File permission handling...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        source_dir = Path(tmpdir) / "source"
+        dest_dir = Path(tmpdir) / "dest"
+        source_dir.mkdir()
+        dest_dir.mkdir()
+        
+        # Create existing file in dest with specific permissions
+        existing_file = dest_dir / "existing.dat"
+        existing_file.write_text("existing")
+        os.chmod(existing_file, 0o644)
+        
+        # Create source file
+        source_file = source_dir / "test.dat"
+        source_file.write_text("test data")
+        
+        # Copy file
+        dest_file = dest_dir / "test.dat"
+        engine = SyncEngine()
+        success = engine.copy_file(source_file, dest_file)
+        
+        assert success
+        assert dest_file.exists()
+        
+        # Check permissions match existing file
+        dest_mode = dest_file.stat().st_mode & 0o777
+        existing_mode = existing_file.stat().st_mode & 0o777
+        assert dest_mode == existing_mode
+        
+        print(f"  ✓ Permissions matched existing files: {oct(dest_mode)}")
+        return True
+
+
+def test_disk_space_check():
+    """Test disk space verification"""
+    print("\nTest 9: Disk space verification...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        dest_dir = Path(tmpdir)
+        
+        engine = SyncEngine()
+        
+        # Should have space for small file
+        has_space = engine.verify_disk_space(dest_dir, 1024)
+        assert has_space
+        print("  ✓ Disk space check works")
+        return True
+
+
 def main():
     print("=== Sync Engine Tests ===\n")
     
@@ -194,7 +278,10 @@ def main():
         test_local_newer,
         test_cloud_newer,
         test_conflict_detection,
-        test_sync_summary
+        test_sync_summary,
+        test_copy_file,
+        test_copy_file_permissions,
+        test_disk_space_check
     ]
     
     results = []

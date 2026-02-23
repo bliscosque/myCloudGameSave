@@ -4,6 +4,7 @@ Handles file synchronization between local and cloud
 """
 
 import os
+import shutil
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime
@@ -175,6 +176,67 @@ class SyncEngine:
                 return SyncAction.SKIP
         
         return SyncAction.SKIP
+    
+    def copy_file(self, source: Path, dest: Path, preserve_timestamp: bool = True) -> bool:
+        """Copy file from source to destination
+        
+        Args:
+            source: Source file path
+            dest: Destination file path
+            preserve_timestamp: Preserve file modification time (default: True)
+            
+        Returns:
+            True if successful, False otherwise
+        """
+        try:
+            # Ensure destination directory exists
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Copy file
+            shutil.copy2(source, dest) if preserve_timestamp else shutil.copy(source, dest)
+            
+            # Get typical permissions from destination directory
+            # This handles cloud storage that may not preserve permissions
+            try:
+                # Try to match permissions of other files in the directory
+                if dest.parent.exists():
+                    for sibling in dest.parent.iterdir():
+                        if sibling.is_file() and sibling != dest:
+                            # Copy permissions from existing file
+                            sibling_stat = sibling.stat()
+                            os.chmod(dest, sibling_stat.st_mode)
+                            break
+                    else:
+                        # No other files, use safe default (rw-r--r--)
+                        os.chmod(dest, 0o644)
+            except (OSError, PermissionError):
+                # If we can't set permissions, that's okay
+                # Cloud storage might handle this differently
+                pass
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error copying {source} to {dest}: {e}")
+            return False
+    
+    def verify_disk_space(self, dest_dir: Path, required_bytes: int) -> bool:
+        """Verify sufficient disk space is available
+        
+        Args:
+            dest_dir: Destination directory
+            required_bytes: Required space in bytes
+            
+        Returns:
+            True if sufficient space available
+        """
+        try:
+            stat = os.statvfs(dest_dir)
+            available = stat.f_bavail * stat.f_frsize
+            return available >= required_bytes
+        except:
+            # If we can't check, assume it's okay
+            return True
     
     def get_sync_summary(self, comparisons: List[FileComparison]) -> Dict[str, Any]:
         """Get summary of sync actions
