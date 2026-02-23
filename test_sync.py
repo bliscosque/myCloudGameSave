@@ -269,6 +269,68 @@ def test_disk_space_check():
         return True
 
 
+def test_create_backup():
+    """Test backup creation"""
+    print("\nTest 10: Backup creation...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        file_dir = Path(tmpdir) / "files"
+        backup_dir = Path(tmpdir) / "backups"
+        file_dir.mkdir()
+        
+        # Create file to backup
+        test_file = file_dir / "save.dat"
+        test_file.write_text("important data")
+        
+        engine = SyncEngine()
+        backup_path = engine.create_backup(test_file, backup_dir, "local")
+        
+        assert backup_path is not None
+        assert backup_path.exists()
+        assert backup_path.read_text() == "important data"
+        
+        # Check backup filename format
+        assert "save.dat" in backup_path.name
+        assert ".local.backup" in backup_path.name
+        
+        print(f"  ✓ Backup created: {backup_path.name}")
+        return True
+
+
+def test_backup_with_timestamp():
+    """Test backup timestamp uniqueness"""
+    print("\nTest 11: Backup timestamp uniqueness...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        file_dir = Path(tmpdir) / "files"
+        backup_dir = Path(tmpdir) / "backups"
+        file_dir.mkdir()
+        
+        # Create file
+        test_file = file_dir / "save.dat"
+        test_file.write_text("data v1")
+        
+        engine = SyncEngine()
+        
+        # Create first backup
+        backup1 = engine.create_backup(test_file, backup_dir, "local")
+        
+        time.sleep(1.1)  # Ensure different timestamp
+        
+        # Modify and create second backup
+        test_file.write_text("data v2")
+        backup2 = engine.create_backup(test_file, backup_dir, "cloud")
+        
+        assert backup1 != backup2
+        assert backup1.exists()
+        assert backup2.exists()
+        assert backup1.read_text() == "data v1"
+        assert backup2.read_text() == "data v2"
+        
+        print(f"  ✓ Multiple backups with unique timestamps")
+        return True
+
+
 def main():
     print("=== Sync Engine Tests ===\n")
     
@@ -281,7 +343,9 @@ def main():
         test_sync_summary,
         test_copy_file,
         test_copy_file_permissions,
-        test_disk_space_check
+        test_disk_space_check,
+        test_create_backup,
+        test_backup_with_timestamp
     ]
     
     results = []

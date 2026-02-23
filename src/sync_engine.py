@@ -220,6 +220,39 @@ class SyncEngine:
             print(f"Error copying {source} to {dest}: {e}")
             return False
     
+    def create_backup(self, file_path: Path, backup_dir: Path, source_label: str = "backup") -> Optional[Path]:
+        """Create a timestamped backup of a file
+        
+        Args:
+            file_path: Path to file to backup
+            backup_dir: Directory to store backups
+            source_label: Label for backup source (e.g., "local", "cloud")
+            
+        Returns:
+            Path to backup file, or None if failed
+        """
+        if not file_path.exists():
+            return None
+        
+        try:
+            # Ensure backup directory exists
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Create backup filename with timestamp and source
+            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            filename = file_path.name
+            backup_name = f"{filename}.{timestamp}.{source_label}.backup"
+            backup_path = backup_dir / backup_name
+            
+            # Copy file to backup
+            shutil.copy2(file_path, backup_path)
+            
+            return backup_path
+            
+        except Exception as e:
+            print(f"Error creating backup of {file_path}: {e}")
+            return None
+    
     def verify_disk_space(self, dest_dir: Path, required_bytes: int) -> bool:
         """Verify sufficient disk space is available
         
