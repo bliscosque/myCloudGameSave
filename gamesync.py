@@ -473,6 +473,106 @@ def cmd_sync(args):
         print("\n⚠ Conflicts detected. Run 'gamesync status' to review.")
 
 
+def cmd_status(args):
+    """Show sync status for games"""
+    from src.sync_engine import SyncEngine
+    
+    config_mgr = ConfigManager()
+    if not config_mgr.config_exists():
+        print("✗ Configuration not initialized. Run 'gamesync init' first.")
+        sys.exit(1)
+    
+    # Load global config
+    global_config = config_mgr.load_config()
+    cloud_directory = global_config.get('general', {}).get('cloud_directory')
+    
+    if not cloud_directory:
+        print("✗ Cloud directory not configured.")
+        sys.exit(1)
+    
+    cloud_dir = Path(cloud_directory)
+    
+    # Determine which games to check
+    if args.game_id:
+        game_ids = [args.game_id]
+    else:
+        game_ids = config_mgr.list_games()
+    
+    if not game_ids:
+        print("No games configured.")
+        return
+    
+    sync_engine = SyncEngine()
+    
+    for game_id in game_ids:
+        try:
+            game_config = config_mgr.load_game_config(game_id)
+        except Exception as e:
+            print(f"✗ {game_id}: Failed to load config - {e}\n")
+            continue
+        
+        name = game_config.get('game', {}).get('name', game_id)
+        enabled = game_config.get('sync', {}).get('enabled', True)
+        last_sync = game_config.get('sync', {}).get('last_sync', '')
+        
+        print(f"\n{'='*60}")
+        print(f"{name} ({game_id})")
+        print(f"{'='*60}")
+        print(f"Status: {'Enabled' if enabled else 'Disabled'}")
+        print(f"Last sync: {last_sync if last_sync else 'Never'}")
+        
+        if not enabled:
+            continue
+        
+        # Get paths
+        local_path = Path(game_config.get('paths', {}).get('local', ''))
+        backup_dir_name = game_config.get('game', {}).get('backup_dir_name', '')
+        game_cloud_dir = cloud_dir / backup_dir_name
+        
+        if not local_path.exists():
+            print(f"✗ Local path does not exist: {local_path}")
+            continue
+        
+        if not game_cloud_dir.exists():
+            print(f"⚠ Cloud directory does not exist (will be created on sync)")
+            continue
+        
+        # Compare directories
+        comparisons = sync_engine.compare_directories(
+            local_path,
+            game_cloud_dir,
+            last_sync if last_sync else None
+        )
+        
+        # Count actions
+        to_cloud = sum(1 for c in comparisons if c.action.value == 'copy_to_cloud')
+        to_local = sum(1 for c in comparisons if c.action.value == 'copy_to_local')
+        conflicts = sum(1 for c in comparisons if c.action.value == 'conflict')
+        up_to_date = sum(1 for c in comparisons if c.action.value == 'skip')
+        
+        print(f"\nFiles to sync:")
+        print(f"  → Cloud: {to_cloud}")
+        print(f"  ← Local: {to_local}")
+        print(f"  ⚠ Conflicts: {conflicts}")
+        print(f"  ✓ Up to date: {up_to_date}")
+        
+        # Show details if verbose or if there are conflicts
+        if args.verbose or conflicts > 0:
+            print(f"\nDetails:")
+            for comp in comparisons:
+                if comp.action.value == 'skip' and not args.verbose:
+                    continue
+                
+                if comp.action.value == 'copy_to_cloud':
+                    print(f"  → {comp.filename} (local → cloud)")
+                elif comp.action.value == 'copy_to_local':
+                    print(f"  ← {comp.filename} (cloud → local)")
+                elif comp.action.value == 'conflict':
+                    print(f"  ⚠ {comp.filename} (CONFLICT)")
+                elif args.verbose:
+                    print(f"  ✓ {comp.filename} (up to date)")
+
+
 def setup_logging(args):
     """Set up logging based on config and arguments
     
@@ -544,6 +644,8 @@ def main():
         cmd_add(args)
     elif args.command == 'sync':
         cmd_sync(args)
+    elif args.command == 'status':
+        cmd_status(args)
     else:
         print(f"Command '{args.command}' not yet implemented")
 

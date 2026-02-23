@@ -159,7 +159,7 @@
   - Display summary of synced files
   - Handle conflicts (prompt or defer)
 
-- [ ] **Task 5.7**: Implement `status` command
+- [x] **Task 5.7**: Implement `status` command
   - Show sync status for game(s)
   - Display files that would be synced
   - Show pending conflicts
