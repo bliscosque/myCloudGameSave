@@ -211,6 +211,21 @@ For each file in local and cloud:
 <project-root>/
 ├── gamesync.py                  # Main application
 ├── src/                         # Source modules
+│   ├── config_manager.py
+│   ├── game_detector.py
+│   ├── save_detector.py
+│   ├── sync_engine.py
+│   ├── conflict_resolver.py
+│   ├── vdf_parser.py
+│   └── logger.py
+├── tests/                       # Test suite
+│   ├── __init__.py
+│   ├── run_tests.py            # Test runner
+│   ├── test_config.py
+│   ├── test_logger.py
+│   ├── test_detector.py
+│   ├── test_sync.py
+│   └── test_conflict.py
 ├── config/                      # Configuration directory (git-ignored)
 │   └── <HOSTNAME>/              # Per-machine configuration
 │       ├── config.toml          # Global configuration

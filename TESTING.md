@@ -76,18 +76,32 @@ The project has comprehensive unit tests covering all core functionality. All te
 
 ## Test Execution
 
-Run all tests:
+Run all tests from project root:
 ```bash
-~/vscode/venv/bin/python run_tests.py
+~/vscode/venv/bin/python tests/run_tests.py
 ```
 
 Run individual test suites:
 ```bash
-~/vscode/venv/bin/python test_config.py
-~/vscode/venv/bin/python test_logger.py
-~/vscode/venv/bin/python test_detector.py
-~/vscode/venv/bin/python test_sync.py
-~/vscode/venv/bin/python test_conflict.py
+~/vscode/venv/bin/python tests/test_config.py
+~/vscode/venv/bin/python tests/test_logger.py
+~/vscode/venv/bin/python tests/test_detector.py
+~/vscode/venv/bin/python tests/test_sync.py
+~/vscode/venv/bin/python tests/test_conflict.py
+```
+
+## Test Organization
+
+Tests are organized in the `tests/` directory following Python best practices:
+```
+tests/
+├── __init__.py           # Test package initialization
+├── run_tests.py          # Unified test runner
+├── test_config.py        # Configuration tests
+├── test_logger.py        # Logger tests
+├── test_detector.py      # Game detector tests
+├── test_sync.py          # Sync engine tests
+└── test_conflict.py      # Conflict resolver tests
 ```
 
 ## Coverage Areas

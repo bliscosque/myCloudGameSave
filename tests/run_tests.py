@@ -5,6 +5,9 @@ import sys
 import subprocess
 from pathlib import Path
 
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 def run_test_file(test_file):
     """Run a single test file and return results"""
     print(f"\n{'='*60}")
@@ -14,7 +17,8 @@ def run_test_file(test_file):
     result = subprocess.run(
         [sys.executable, test_file],
         capture_output=True,
-        text=True
+        text=True,
+        cwd=Path(__file__).parent.parent  # Run from project root
     )
     
     print(result.stdout)
@@ -25,12 +29,13 @@ def run_test_file(test_file):
 
 def main():
     """Run all test files"""
+    tests_dir = Path(__file__).parent
     test_files = [
-        'test_config.py',
-        'test_logger.py',
-        'test_detector.py',
-        'test_sync.py',
-        'test_conflict.py',
+        'tests/test_config.py',
+        'tests/test_logger.py',
+        'tests/test_detector.py',
+        'tests/test_sync.py',
+        'tests/test_conflict.py',
     ]
     
     print("="*60)
@@ -39,8 +44,9 @@ def main():
     
     results = {}
     for test_file in test_files:
-        if Path(test_file).exists():
-            results[test_file] = run_test_file(test_file)
+        test_path = Path(__file__).parent.parent / test_file
+        if test_path.exists():
+            results[test_file] = run_test_file(test_path)
         else:
             print(f"⚠ Warning: {test_file} not found")
             results[test_file] = False

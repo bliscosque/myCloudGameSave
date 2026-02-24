@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """Tests for conflict resolution"""
 
+import sys
 import tempfile
 import time
 from pathlib import Path
 from datetime import datetime, timedelta
+
+# Add project root to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from src.conflict_resolver import ConflictResolver, ResolutionStrategy
 
 

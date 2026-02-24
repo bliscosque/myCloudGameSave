@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 from datetime import datetime
 
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.sync_engine import SyncEngine, SyncAction
 
