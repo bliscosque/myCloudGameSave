@@ -3,7 +3,8 @@
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import Header, Footer, Static, Label
+from textual.widgets import Header, Footer, Static, Label, Button
+from textual.reactive import reactive
 
 from src.config_manager import ConfigManager
 from src.logger import init_logger, get_logger
@@ -15,10 +16,10 @@ class Sidebar(Vertical):
     def compose(self) -> ComposeResult:
         yield Label("[bold cyan]Navigation[/bold cyan]")
         yield Static("─" * 20)
-        yield Label("• Dashboard")
-        yield Label("• Games")
-        yield Label("• Sync")
-        yield Label("• Settings")
+        yield Button("Dashboard", id="nav-dashboard", variant="primary")
+        yield Button("Games", id="nav-games")
+        yield Button("Sync", id="nav-sync")
+        yield Button("Settings", id="nav-settings")
 
 
 class Dashboard(Vertical):
@@ -47,6 +48,33 @@ class Dashboard(Vertical):
         yield Label("Last Sync: Never")
 
 
+class GamesScreen(Vertical):
+    """Games management screen"""
+    
+    def compose(self) -> ComposeResult:
+        yield Label("[bold]Games[/bold]")
+        yield Static("─" * 40)
+        yield Label("Game management coming soon...")
+
+
+class SyncScreen(Vertical):
+    """Sync screen"""
+    
+    def compose(self) -> ComposeResult:
+        yield Label("[bold]Sync[/bold]")
+        yield Static("─" * 40)
+        yield Label("Sync functionality coming soon...")
+
+
+class SettingsScreen(Vertical):
+    """Settings screen"""
+    
+    def compose(self) -> ComposeResult:
+        yield Label("[bold]Settings[/bold]")
+        yield Static("─" * 40)
+        yield Label("Settings coming soon...")
+
+
 class GameSyncTUI(App):
     """Terminal UI for Game Save Synchronization"""
     
@@ -63,7 +91,12 @@ class GameSyncTUI(App):
         border-right: solid $primary;
     }
     
-    Dashboard {
+    Sidebar Button {
+        width: 100%;
+        margin-bottom: 1;
+    }
+    
+    Dashboard, GamesScreen, SyncScreen, SettingsScreen {
         width: 100%;
         height: 100%;
         padding: 1 2;
@@ -73,12 +106,23 @@ class GameSyncTUI(App):
         width: 100%;
         height: 100%;
     }
+    
+    #content-area {
+        width: 100%;
+        height: 100%;
+    }
     """
     
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("d", "toggle_dark", "Toggle Dark Mode"),
+        ("1", "show_dashboard", "Dashboard"),
+        ("2", "show_games", "Games"),
+        ("3", "show_sync", "Sync"),
+        ("4", "show_settings", "Settings"),
     ]
+    
+    current_screen = reactive("dashboard")
     
     def __init__(self):
         super().__init__()
@@ -90,7 +134,10 @@ class GameSyncTUI(App):
         yield Header(show_clock=True)
         yield Horizontal(
             Sidebar(),
-            Dashboard(self.config_manager),
+            Container(
+                Dashboard(self.config_manager),
+                id="content-area"
+            ),
             id="main-container"
         )
         yield Footer()
@@ -115,6 +162,60 @@ class GameSyncTUI(App):
         except Exception as e:
             # Can't use logger if it failed to initialize
             pass
+    
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button clicks"""
+        button_id = event.button.id
+        
+        if button_id == "nav-dashboard":
+            self.switch_screen("dashboard")
+        elif button_id == "nav-games":
+            self.switch_screen("games")
+        elif button_id == "nav-sync":
+            self.switch_screen("sync")
+        elif button_id == "nav-settings":
+            self.switch_screen("settings")
+    
+    def switch_screen(self, screen_name: str) -> None:
+        """Switch to a different screen"""
+        self.current_screen = screen_name
+        
+        # Get content area and clear it
+        content_area = self.query_one("#content-area")
+        content_area.remove_children()
+        
+        # Mount new screen
+        if screen_name == "dashboard":
+            content_area.mount(Dashboard(self.config_manager))
+        elif screen_name == "games":
+            content_area.mount(GamesScreen())
+        elif screen_name == "sync":
+            content_area.mount(SyncScreen())
+        elif screen_name == "settings":
+            content_area.mount(SettingsScreen())
+        
+        # Update button variants
+        for button in self.query("Sidebar Button"):
+            if button.id == f"nav-{screen_name}":
+                button.variant = "primary"
+            else:
+                button.variant = "default"
+    
+    def action_show_dashboard(self) -> None:
+        """Show dashboard screen"""
+        self.switch_screen("dashboard")
+    
+    def action_show_games(self) -> None:
+        """Show games screen"""
+        self.switch_screen("games")
+    
+    def action_show_sync(self) -> None:
+        """Show sync screen"""
+        self.switch_screen("sync")
+    
+    def action_show_settings(self) -> None:
+        """Show settings screen"""
+        self.switch_screen("settings")
 
 
 def main():
