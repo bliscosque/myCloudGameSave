@@ -70,10 +70,10 @@ class GamesScreen(Vertical):
                 for game_id in games:
                     game_config = self.config_manager.load_game_config(game_id)
                     
-                    name = game_config.get("game_name", game_id)
-                    enabled = game_config.get("enabled", True)
+                    name = game_config.get("game", {}).get("name", game_id)
+                    enabled = game_config.get("sync", {}).get("enabled", True)
                     status = "✓ Enabled" if enabled else "✗ Disabled"
-                    last_sync = game_config.get("last_sync", "Never")
+                    last_sync = game_config.get("sync", {}).get("last_sync", "Never")
                     
                     # Format last_sync if it's a timestamp
                     if last_sync and last_sync != "Never":
