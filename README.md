@@ -68,12 +68,22 @@ All configuration files are human-readable and can be edited manually.
 
 Phase 1 (CLI) is currently in development. See [tasks.md](tasks.md) for detailed progress.
 
-## Future Plans
+## Roadmap
 
-- Phase 2: Qt-based GUI
-- Automatic file watching and sync
-- Support for native Steam games
-- Additional game launcher support (Epic, GOG, etc.)
+- **Phase 1**: CLI Implementation (Current - 72% complete)
+  - Command-line interface
+  - Core sync functionality
+  - Game detection and configuration
+  
+- **Phase 2**: TUI Implementation (Planned)
+  - Terminal User Interface using Textual
+  - Interactive dashboard
+  - Real-time monitoring
+  
+- **Phase 3**: GUI Implementation (Future)
+  - Qt-based graphical interface
+  - System tray integration
+  - Desktop notifications
 
 ## License
 

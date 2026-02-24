@@ -85,26 +85,54 @@ A multi-platform command-line tool that synchronizes game save files between loc
 
 ### 3.6 Maintainability
 
-- **NFR-6.1**: Code shall be modular to allow future GUI integration
+- **NFR-6.1**: Code shall be modular to allow future TUI/GUI integration
 - **NFR-6.2**: Sync backend shall be abstracted to allow alternative implementations
 
-## 4. Future Enhancements (Phase 2+)
+## 4. Development Phases
 
-- **FE-1**: Qt-based GUI for easier configuration and monitoring
-- **FE-2**: Automatic file watching and sync on changes
-- **FE-3**: Support for native Steam games (in addition to non-Steam)
-- **FE-4**: Support for additional game launchers (Epic, GOG, etc.)
-- **FE-5**: Sync scheduling within the tool
-- **FE-6**: Cloud provider integration (direct API access without mounting)
-- **FE-7**: Recursive directory sync (currently only syncs files in top-level directory)
+### Phase 1: CLI Implementation (Current)
+- Command-line interface
+- Core sync functionality
+- Game detection and configuration
+- Conflict resolution
+
+### Phase 2: TUI Implementation
+- Terminal User Interface using Textual library
+- Interactive dashboard
+- Real-time sync monitoring
+- Visual conflict resolution
+- Configuration management UI
+
+### Phase 3: GUI Implementation
+- Qt-based graphical interface
+- System tray integration
+- Desktop notifications
+- Advanced features
+
+## 5. Future Enhancements
+
+### Phase 2 (TUI) Enhancements:
+- **FE-1**: Textual-based TUI for interactive management
+- **FE-2**: Real-time sync status dashboard
+- **FE-3**: Visual game library browser
+- **FE-4**: Interactive conflict resolution interface
+
+### Phase 3+ Enhancements:
+- **FE-5**: Qt-based GUI for easier configuration and monitoring
+- **FE-6**: Automatic file watching and sync on changes
+- **FE-7**: Support for native Steam games (in addition to non-Steam)
+- **FE-8**: Support for additional game launchers (Epic, GOG, etc.)
+- **FE-9**: Sync scheduling within the tool
+- **FE-10**: Cloud provider integration (direct API access without mounting)
+- **FE-11**: Recursive directory sync (currently only syncs files in top-level directory)
   - Research: Determine if most games store saves in flat structure or nested directories
   - If nested is common, implement recursive sync with proper conflict handling
   - Consider per-game configuration option for recursive vs flat sync
 
-## 5. Constraints
+## 6. Constraints
 
 - **C-1**: Cloud storage must be mounted and accessible as a local directory
-- **C-2**: Phase 1 is terminal/CLI only
+- **C-2**: Phase 1 is terminal/CLI only, Phase 2 is TUI, Phase 3 is GUI
 - **C-3**: User is responsible for cloud mounting (rclone, etc.)
 - **C-4**: All configuration and data files must remain within the project directory
 - **C-5**: Configuration directory must be excluded from version control

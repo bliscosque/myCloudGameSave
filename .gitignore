@@ -1,6 +1,9 @@
 # Configuration directory - contains machine-specific and private data
 config/
 
+# Chats
+kiro/
+
 # Python
 __pycache__/
 *.py[cod]

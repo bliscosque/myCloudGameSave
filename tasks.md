@@ -333,6 +333,134 @@
 
 ---
 
+## Phase 2: TUI Implementation (Textual)
+
+### Milestone 8: TUI Foundation
+
+- [ ] **Task 8.1**: Set up Textual framework
+  - Add textual to requirements.txt
+  - Create TUI entry point (gamesync-tui.py)
+  - Set up basic app structure
+  - Implement theme and styling
+
+- [ ] **Task 8.2**: Create main dashboard layout
+  - Header with app title and status
+  - Sidebar for navigation
+  - Main content area
+  - Footer with help/shortcuts
+
+- [ ] **Task 8.3**: Implement navigation system
+  - Menu items (Dashboard, Games, Sync, Settings)
+  - Keyboard shortcuts
+  - Screen switching logic
+
+### Milestone 9: Game Management UI
+
+- [ ] **Task 9.1**: Implement game list view
+  - Display all configured games
+  - Show game status (enabled/disabled)
+  - Show last sync time
+  - Sortable columns
+
+- [ ] **Task 9.2**: Implement game details view
+  - Show full game information
+  - Display local and cloud paths
+  - Show sync statistics
+  - Edit game configuration
+
+- [ ] **Task 9.3**: Implement add game dialog
+  - Interactive form for manual game addition
+  - Path browser/selector
+  - Validation and error display
+
+- [ ] **Task 9.4**: Implement game detection UI
+  - Show detection progress
+  - Display detected games with checkboxes
+  - Bulk add selected games
+
+### Milestone 10: Sync Operations UI
+
+- [ ] **Task 10.1**: Implement sync dashboard
+  - Real-time sync status display
+  - Progress bars for active syncs
+  - File transfer statistics
+  - Recent sync history
+
+- [ ] **Task 10.2**: Implement sync control panel
+  - Start/stop sync buttons
+  - Select games to sync (checkboxes)
+  - Sync all button
+  - Dry-run toggle
+
+- [ ] **Task 10.3**: Implement conflict resolution UI
+  - Visual diff display for conflicts
+  - Side-by-side file comparison
+  - Resolution buttons (keep local/cloud/both)
+  - Batch conflict resolution
+
+- [ ] **Task 10.4**: Implement sync logs viewer
+  - Scrollable log display
+  - Filter by level (info/warning/error)
+  - Search functionality
+  - Export logs
+
+### Milestone 11: Configuration UI
+
+- [ ] **Task 11.1**: Implement settings screen
+  - Cloud directory configuration
+  - Global sync options
+  - Logging preferences
+  - Theme selection
+
+- [ ] **Task 11.2**: Implement game configuration editor
+  - Edit local/cloud paths
+  - Manage exclude patterns
+  - Enable/disable sync
+  - Advanced options
+
+### Milestone 12: Polish & Integration
+
+- [ ] **Task 12.1**: Add keyboard shortcuts
+  - Global shortcuts (quit, help, refresh)
+  - Context-specific shortcuts
+  - Shortcut help overlay
+
+- [ ] **Task 12.2**: Implement notifications
+  - Sync completion notifications
+  - Error notifications
+  - Conflict alerts
+
+- [ ] **Task 12.3**: Add help system
+  - Help overlay/modal
+  - Context-sensitive help
+  - Tutorial/walkthrough
+
+- [ ] **Task 12.4**: Performance optimization
+  - Async operations for UI responsiveness
+  - Efficient list rendering
+  - Background sync monitoring
+
+- [ ] **Task 12.5**: Testing and bug fixes
+  - Test all UI interactions
+  - Test keyboard navigation
+  - Test on different terminal sizes
+  - Fix identified issues
+
+---
+
+## Phase 3: GUI Implementation (Qt)
+
+### Future Milestones (To be detailed later)
+
+- Milestone 13: Qt Framework Setup
+- Milestone 14: Main Window & Navigation
+- Milestone 15: Game Management GUI
+- Milestone 16: Sync Operations GUI
+- Milestone 17: System Integration (Tray, Notifications)
+- Milestone 18: Advanced Features
+
+---
+
 ## Progress Summary
 
 **Phase 1 - CLI Implementation**
@@ -344,7 +472,19 @@
 - Milestone 6: Testing & Documentation (0/5 tasks)
 - Milestone 7: Polish & Release (0/5 tasks)
 
-**Total Phase 1 Progress: 26/36 tasks completed**
+**Total Phase 1 Progress: 26/36 tasks completed (72%)**
+
+**Phase 2 - TUI Implementation**
+- Milestone 8: TUI Foundation (0/3 tasks)
+- Milestone 9: Game Management UI (0/4 tasks)
+- Milestone 10: Sync Operations UI (0/4 tasks)
+- Milestone 11: Configuration UI (0/2 tasks)
+- Milestone 12: Polish & Integration (0/5 tasks)
+
+**Total Phase 2 Progress: 0/18 tasks completed (0%)**
+
+**Phase 3 - GUI Implementation**
+- To be detailed when Phase 2 is complete
 
 ---
 
@@ -355,3 +495,4 @@
 - Testing should be done incrementally, not just at Milestone 6
 - Update this document as tasks are completed by checking the boxes
 - Add notes or blockers for tasks as needed
+- Phase 2 (TUI) tasks are subject to review and adjustment before implementation
