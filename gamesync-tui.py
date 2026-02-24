@@ -439,12 +439,14 @@ class SyncScreen(Vertical):
         try:
             # Get game_id from mapping
             row_key = str(event.row_key)
+            
+            # Debug: Show what we got
+            self.app.notify(f"Row key: {row_key}, Map: {list(self.game_id_map.keys())}")
+            
             game_id = self.game_id_map.get(row_key)
             
-            # Debug: Show notification
-            self.app.notify(f"Opening sync preview for: {game_id}")
-            
             if not game_id:
+                self.app.notify(f"No game_id found for key: {row_key}", severity="warning")
                 return
             
             # Load game config and open sync preview
