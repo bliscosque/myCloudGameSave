@@ -83,6 +83,15 @@ class SyncPreviewScreen(ModalScreen):
             backup_dir = self.config_manager.backups_dir / self.game_id
             last_sync = self.game_config.get("sync", {}).get("last_sync")
             
+            # Debug log
+            with open("/tmp/tui_debug.log", "a") as f:
+                f.write(f"\n=== Dry Run ===\n")
+                f.write(f"Game ID: {self.game_id}\n")
+                f.write(f"Local dir: {local_dir}\n")
+                f.write(f"Cloud dir: {cloud_dir}\n")
+                f.write(f"Backup dir: {backup_dir}\n")
+                f.write(f"Last sync: {last_sync}\n")
+            
             # Run sync engine in dry-run mode
             sync_engine = SyncEngine()
             result = sync_engine.sync_files(
@@ -99,7 +108,7 @@ class SyncPreviewScreen(ModalScreen):
             
             actions = result.get("actions", [])
             if actions:
-                for action in actions:
+                for idx, action in enumerate(actions):
                     filename = action.get("file", "")
                     action_type = action.get("action", "")
                     size = action.get("size", 0)
@@ -120,7 +129,8 @@ class SyncPreviewScreen(ModalScreen):
                     # Store default action
                     self.sync_actions[filename] = action_type
                     
-                    table.add_row(filename, action_type, size_str, direction, key=filename)
+                    # Use sequential key to avoid duplicates
+                    table.add_row(filename, action_type, size_str, direction, key=f"file_{idx}")
             else:
                 table.add_row("No changes needed", "", "", "")
             
@@ -129,6 +139,12 @@ class SyncPreviewScreen(ModalScreen):
             status.update(f"Found {len(actions)} file(s) to sync")
             
         except Exception as e:
+            # Log error
+            with open("/tmp/tui_debug.log", "a") as f:
+                import traceback
+                f.write(f"Error in dry-run: {e}\n")
+                f.write(traceback.format_exc())
+            
             table = self.query_one("#sync-preview-table", DataTable)
             table.add_columns("Error", "", "", "")
             table.add_row(f"Error running dry-run: {e}", "", "", "")
