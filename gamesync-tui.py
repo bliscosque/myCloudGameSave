@@ -212,18 +212,24 @@ class GamesScreen(Vertical):
     
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """Handle row selection - show game details"""
-        table = event.data_table
-        row_key = event.row_key
-        
-        # Get game_id from first column
-        game_id = table.get_row(row_key)[0]
-        
-        if game_id and game_id.strip():  # Not empty row
-            try:
-                game_config = self.config_manager.load_game_config(game_id)
-                self.app.push_screen(GameDetailsScreen(game_id, game_config))
-            except Exception as e:
-                pass
+        try:
+            table = event.data_table
+            row_key = event.row_key
+            
+            # Get game_id from first column
+            row_data = table.get_row(row_key)
+            game_id = str(row_data[0])
+            
+            # Skip if empty or error row
+            if not game_id or not game_id.strip() or game_id == "":
+                return
+                
+            # Load and show game config
+            game_config = self.config_manager.load_game_config(game_id)
+            self.app.push_screen(GameDetailsScreen(game_id, game_config))
+        except Exception as e:
+            # Silently ignore errors (e.g., clicking on "No games" row)
+            pass
 
 
 class SyncScreen(Vertical):
@@ -303,7 +309,11 @@ class GameSyncTUI(App):
     
     def __init__(self):
         super().__init__()
-        self.config_manager = None
+        # Initialize config manager early
+        try:
+            self.config_manager = ConfigManager()
+        except:
+            self.config_manager = None
         self.logger = None
         
     def compose(self) -> ComposeResult:
@@ -324,20 +334,16 @@ class GameSyncTUI(App):
         self.title = "Game Save Sync"
         self.sub_title = "Cloud Synchronization Tool"
         
-        # Initialize config manager
+        # Initialize logger (config_manager already initialized in __init__)
         try:
-            self.config_manager = ConfigManager()
-            config = self.config_manager.load_config()
-            
-            # Initialize logger
-            self.logger = init_logger(
-                self.config_manager.logs_dir, 
-                config.get("general", {}).get("log_level", "INFO").upper()
-            )
-            self.logger.info("TUI started")
-            
+            if self.config_manager:
+                config = self.config_manager.load_config()
+                self.logger = init_logger(
+                    self.config_manager.logs_dir, 
+                    config.get("general", {}).get("log_level", "INFO").upper()
+                )
+                self.logger.info("TUI started")
         except Exception as e:
-            # Can't use logger if it failed to initialize
             pass
     
     def on_button_pressed(self, event: Button.Pressed) -> None:
