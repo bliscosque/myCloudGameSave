@@ -166,10 +166,10 @@ class GameDetailsScreen(ModalScreen):
 class GamesScreen(Vertical):
     """Games management screen"""
     
-    def __init__(self, config_manager, app):
+    def __init__(self, config_manager, parent_app):
         super().__init__()
         self.config_manager = config_manager
-        self.app = app
+        self.parent_app = parent_app
     
     def compose(self) -> ComposeResult:
         yield Label("[bold]Games[/bold]")
@@ -226,7 +226,7 @@ class GamesScreen(Vertical):
                 
             # Load and show game config
             game_config = self.config_manager.load_game_config(game_id)
-            self.app.push_screen(GameDetailsScreen(game_id, game_config))
+            self.parent_app.push_screen(GameDetailsScreen(game_id, game_config))
         except Exception as e:
             # Silently ignore errors (e.g., clicking on "No games" row)
             pass
