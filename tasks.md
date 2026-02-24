@@ -187,11 +187,13 @@
   - Test cross-platform path handling
 
 - [ ] **Task 6.3**: Manual testing with real games
-  - Test with actual Steam games
-  - Test with non-Steam games
-  - Test on both Linux and Windows
-  - Test with cloud-mounted directory (rclone)
-  - Test large save files
+  - ✓ Test with non-Steam games (completed - Hellblade 1/2, Metaphor, Persona 5 Royal)
+  - Test on both Linux and Windows (pending - need Windows machine)
+  - Test with cloud-mounted directory (pending - need to test with actual Seafile/rclone)
+  - Test large save files (pending - need games with large saves)
+  - Test conflict scenarios in real usage (pending - need extended usage period)
+  
+  Note: This task requires extended real-world usage and will be completed over time.
   - Test conflict scenarios
 
 - [ ] **Task 6.4**: Write user documentation
