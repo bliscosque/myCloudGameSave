@@ -2,8 +2,8 @@
 """Game Save Sync - Terminal User Interface"""
 
 from textual.app import App, ComposeResult
-from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import Header, Footer, Static, Label, Button
+from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
+from textual.widgets import Header, Footer, Static, Label, Button, DataTable
 from textual.reactive import reactive
 
 from src.config_manager import ConfigManager
@@ -51,10 +51,47 @@ class Dashboard(Vertical):
 class GamesScreen(Vertical):
     """Games management screen"""
     
+    def __init__(self, config_manager):
+        super().__init__()
+        self.config_manager = config_manager
+    
     def compose(self) -> ComposeResult:
         yield Label("[bold]Games[/bold]")
         yield Static("─" * 40)
-        yield Label("Game management coming soon...")
+        
+        # Create data table
+        table = DataTable(cursor_type="row")
+        table.add_columns("Game ID", "Name", "Status", "Last Sync")
+        
+        # Load games from config
+        if self.config_manager:
+            try:
+                games = self.config_manager.list_games()
+                for game_id in games:
+                    game_config = self.config_manager.load_game_config(game_id)
+                    
+                    name = game_config.get("game_name", game_id)
+                    enabled = game_config.get("enabled", True)
+                    status = "✓ Enabled" if enabled else "✗ Disabled"
+                    last_sync = game_config.get("last_sync", "Never")
+                    
+                    # Format last_sync if it's a timestamp
+                    if last_sync and last_sync != "Never":
+                        try:
+                            from datetime import datetime
+                            dt = datetime.fromisoformat(last_sync)
+                            last_sync = dt.strftime("%Y-%m-%d %H:%M")
+                        except:
+                            pass
+                    
+                    table.add_row(game_id, name, status, last_sync)
+                
+                if not games:
+                    table.add_row("", "No games configured", "", "")
+            except Exception as e:
+                table.add_row("", f"Error loading games: {e}", "", "")
+        
+        yield table
 
 
 class SyncScreen(Vertical):
@@ -94,6 +131,10 @@ class GameSyncTUI(App):
     Sidebar Button {
         width: 100%;
         margin-bottom: 1;
+    }
+    
+    DataTable {
+        height: 100%;
     }
     
     Dashboard, GamesScreen, SyncScreen, SettingsScreen {
@@ -190,7 +231,7 @@ class GameSyncTUI(App):
         if screen_name == "dashboard":
             content_area.mount(Dashboard(self.config_manager))
         elif screen_name == "games":
-            content_area.mount(GamesScreen())
+            content_area.mount(GamesScreen(self.config_manager))
         elif screen_name == "sync":
             content_area.mount(SyncScreen())
         elif screen_name == "settings":

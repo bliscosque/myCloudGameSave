@@ -263,7 +263,7 @@
 
 ### Milestone 9: Game Management UI
 
-- [ ] **Task 9.1**: Implement game list view
+- [x] **Task 9.1**: Implement game list view
   - Display all configured games
   - Show game status (enabled/disabled)
   - Show last sync time
@@ -383,8 +383,9 @@
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (3/3 tasks) ✓
+- Milestone 9: Game Management UI (1/3 tasks)
 
-**Total Phase 2 Progress: 3/18 tasks completed (17%)**
+**Total Phase 2 Progress: 4/18 tasks completed (22%)**
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (0/3 tasks)
