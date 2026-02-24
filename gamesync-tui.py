@@ -5,6 +5,7 @@ from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
 from textual.widgets import Header, Footer, Static, Label, Button, DataTable
 from textual.reactive import reactive
+from textual.screen import ModalScreen
 
 from src.config_manager import ConfigManager
 from src.logger import init_logger, get_logger
@@ -71,16 +72,109 @@ class Dashboard(Vertical):
         yield Label(f"Last Sync: {last_sync}")
 
 
+class GameDetailsScreen(ModalScreen):
+    """Modal screen showing game details"""
+    
+    CSS = """
+    GameDetailsScreen {
+        align: center middle;
+    }
+    
+    #details-container {
+        width: 80;
+        height: auto;
+        max-height: 90%;
+        background: $panel;
+        border: thick $primary;
+        padding: 1 2;
+    }
+    
+    #details-content {
+        width: 100%;
+        height: auto;
+        max-height: 30;
+    }
+    
+    #details-buttons {
+        width: 100%;
+        height: auto;
+        align: center middle;
+        margin-top: 1;
+    }
+    """
+    
+    def __init__(self, game_id: str, game_config: dict):
+        super().__init__()
+        self.game_id = game_id
+        self.game_config = game_config
+    
+    def compose(self) -> ComposeResult:
+        game = self.game_config.get("game", {})
+        paths = self.game_config.get("paths", {})
+        sync = self.game_config.get("sync", {})
+        metadata = self.game_config.get("metadata", {})
+        
+        # Format last sync
+        last_sync = sync.get("last_sync", "Never")
+        if last_sync and last_sync != "Never":
+            try:
+                from datetime import datetime
+                dt = datetime.fromisoformat(last_sync)
+                last_sync = dt.strftime("%Y-%m-%d %H:%M:%S")
+            except:
+                pass
+        
+        # Build details text
+        details = f"""[bold cyan]{game.get('name', self.game_id)}[/bold cyan]
+
+[bold]Game Information:[/bold]
+  ID: {game.get('id', self.game_id)}
+  Platform: {game.get('platform', 'N/A')}
+  Steam App ID: {game.get('steam_app_id', 'N/A')}
+  Executable: {game.get('exe', 'N/A')}
+
+[bold]Paths:[/bold]
+  Local: {paths.get('local', 'N/A')}
+  Cloud: {paths.get('cloud', 'N/A')}
+
+[bold]Sync Configuration:[/bold]
+  Enabled: {'Yes' if sync.get('enabled', True) else 'No'}
+  Last Sync: {last_sync}
+  Exclude Patterns: {', '.join(sync.get('exclude_patterns', [])) or 'None'}
+
+[bold]Metadata:[/bold]
+  Auto-detected: {'Yes' if metadata.get('auto_detected', False) else 'No'}
+  Last Modified: {metadata.get('last_modified', 'N/A')}
+"""
+        
+        yield Container(
+            ScrollableContainer(
+                Static(details, id="details-content"),
+            ),
+            Horizontal(
+                Button("Close", variant="primary", id="close-btn"),
+                id="details-buttons"
+            ),
+            id="details-container"
+        )
+    
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Close the modal"""
+        self.dismiss()
+
+
 class GamesScreen(Vertical):
     """Games management screen"""
     
-    def __init__(self, config_manager):
+    def __init__(self, config_manager, app):
         super().__init__()
         self.config_manager = config_manager
+        self.app = app
     
     def compose(self) -> ComposeResult:
         yield Label("[bold]Games[/bold]")
         yield Static("─" * 40)
+        yield Label("Press Enter to view game details")
         
         # Create data table
         table = DataTable(cursor_type="row")
@@ -115,6 +209,21 @@ class GamesScreen(Vertical):
                 table.add_row("", f"Error loading games: {e}", "", "")
         
         yield table
+    
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        """Handle row selection - show game details"""
+        table = event.data_table
+        row_key = event.row_key
+        
+        # Get game_id from first column
+        game_id = table.get_row(row_key)[0]
+        
+        if game_id and game_id.strip():  # Not empty row
+            try:
+                game_config = self.config_manager.load_game_config(game_id)
+                self.app.push_screen(GameDetailsScreen(game_id, game_config))
+            except Exception as e:
+                pass
 
 
 class SyncScreen(Vertical):
@@ -256,7 +365,7 @@ class GameSyncTUI(App):
         if screen_name == "dashboard":
             content_area.mount(Dashboard(self.config_manager))
         elif screen_name == "games":
-            content_area.mount(GamesScreen(self.config_manager))
+            content_area.mount(GamesScreen(self.config_manager, self))
         elif screen_name == "sync":
             content_area.mount(SyncScreen())
         elif screen_name == "settings":

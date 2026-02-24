@@ -269,7 +269,7 @@
   - Show last sync time
   - Sortable columns
 
-- [ ] **Task 9.2**: Implement game details view
+- [x] **Task 9.2**: Implement game details view
   - Show full game information
   - Display local and cloud paths
   - Show sync statistics
@@ -383,9 +383,9 @@
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (3/3 tasks) ✓
-- Milestone 9: Game Management UI (1/3 tasks)
+- Milestone 9: Game Management UI (2/3 tasks)
 
-**Total Phase 2 Progress: 4/18 tasks completed (22%)**
+**Total Phase 2 Progress: 5/18 tasks completed (28%)**
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (0/3 tasks)
