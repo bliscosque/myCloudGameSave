@@ -66,12 +66,15 @@ class GameSyncTUI(App):
             config = self.config_manager.load_config()
             
             # Initialize logger
-            log_dir = self.config_manager.get_log_dir()
-            self.logger = init_logger(log_dir, config.get("log_level", "INFO"))
+            self.logger = init_logger(
+                self.config_manager.logs_dir, 
+                config.get("general", {}).get("log_level", "INFO").upper()
+            )
             self.logger.info("TUI started")
             
         except Exception as e:
-            self.logger.error(f"Failed to initialize: {e}")
+            # Can't use logger if it failed to initialize
+            pass
             
     def action_toggle_dark(self) -> None:
         """Toggle dark mode"""
