@@ -250,7 +250,7 @@
   - Set up basic app structure
   - Implement theme and styling
 
-- [ ] **Task 8.2**: Create main dashboard layout
+- [x] **Task 8.2**: Create main dashboard layout
   - Header with app title and status
   - Sidebar for navigation
   - Main content area
@@ -382,9 +382,9 @@
 **Total Phase 1 Progress: 31/36 tasks completed (86%)**
 
 **Phase 2 - TUI Implementation**
-- Milestone 8: TUI Foundation (1/3 tasks)
+- Milestone 8: TUI Foundation (2/3 tasks)
 
-**Total Phase 2 Progress: 1/18 tasks completed (6%)**
+**Total Phase 2 Progress: 2/18 tasks completed (11%)**
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (0/3 tasks)

@@ -2,11 +2,49 @@
 """Game Save Sync - Terminal User Interface"""
 
 from textual.app import App, ComposeResult
-from textual.containers import Container, Vertical
-from textual.widgets import Header, Footer, Static
+from textual.containers import Container, Horizontal, Vertical
+from textual.widgets import Header, Footer, Static, Label
 
 from src.config_manager import ConfigManager
 from src.logger import init_logger, get_logger
+
+
+class Sidebar(Vertical):
+    """Navigation sidebar"""
+    
+    def compose(self) -> ComposeResult:
+        yield Label("[bold cyan]Navigation[/bold cyan]")
+        yield Static("─" * 20)
+        yield Label("• Dashboard")
+        yield Label("• Games")
+        yield Label("• Sync")
+        yield Label("• Settings")
+
+
+class Dashboard(Vertical):
+    """Main dashboard content"""
+    
+    def __init__(self, config_manager):
+        super().__init__()
+        self.config_manager = config_manager
+    
+    def compose(self) -> ComposeResult:
+        yield Label("[bold]Dashboard[/bold]")
+        yield Static("─" * 40)
+        yield Label("Welcome to Game Save Sync")
+        yield Static("")
+        
+        # Get actual game count
+        game_count = 0
+        if self.config_manager:
+            try:
+                game_count = len(self.config_manager.list_games())
+            except:
+                pass
+        
+        yield Label("Status: Ready")
+        yield Label(f"Configured Games: {game_count}")
+        yield Label("Last Sync: Never")
 
 
 class GameSyncTUI(App):
@@ -17,17 +55,23 @@ class GameSyncTUI(App):
         background: $surface;
     }
     
+    Sidebar {
+        width: 25;
+        height: 100%;
+        background: $panel;
+        padding: 1;
+        border-right: solid $primary;
+    }
+    
+    Dashboard {
+        width: 100%;
+        height: 100%;
+        padding: 1 2;
+    }
+    
     #main-container {
         width: 100%;
         height: 100%;
-        padding: 1;
-    }
-    
-    #welcome {
-        width: 100%;
-        height: 100%;
-        content-align: center middle;
-        text-align: center;
     }
     """
     
@@ -43,14 +87,10 @@ class GameSyncTUI(App):
         
     def compose(self) -> ComposeResult:
         """Create child widgets"""
-        yield Header()
-        yield Container(
-            Static(
-                "[bold cyan]Game Save Sync[/bold cyan]\n\n"
-                "Welcome to the Terminal User Interface\n\n"
-                "Press [bold]q[/bold] to quit",
-                id="welcome"
-            ),
+        yield Header(show_clock=True)
+        yield Horizontal(
+            Sidebar(),
+            Dashboard(self.config_manager),
             id="main-container"
         )
         yield Footer()
