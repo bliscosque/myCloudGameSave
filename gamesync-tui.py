@@ -155,7 +155,7 @@ class SyncPreviewScreen(ModalScreen):
         self.dismiss()
 
 
-class GameDetailsScreen(ModalScreen):
+class Sidebar(Vertical):
     """Navigation sidebar"""
     
     def compose(self) -> ComposeResult:
