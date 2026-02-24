@@ -102,6 +102,11 @@ class SyncPreviewScreen(ModalScreen):
                 dry_run=True
             )
             
+            # Debug log result
+            with open("/tmp/tui_debug.log", "a") as f:
+                f.write(f"Result: {result}\n")
+                f.write(f"Actions: {result.get('actions', [])}\n")
+            
             # Populate table
             table = self.query_one("#sync-preview-table", DataTable)
             table.add_columns("File", "Action", "Size", "Direction")
@@ -109,9 +114,9 @@ class SyncPreviewScreen(ModalScreen):
             actions = result.get("actions", [])
             if actions:
                 for idx, action in enumerate(actions):
-                    filename = action.get("file", "")
+                    filename = action.get("filename", "")  # Changed from "file" to "filename"
                     action_type = action.get("action", "")
-                    size = action.get("size", 0)
+                    size = action.get("local_size", 0)  # Changed from "size" to "local_size"
                     
                     # Determine direction symbol
                     if action_type == "copy_to_cloud":
@@ -120,8 +125,10 @@ class SyncPreviewScreen(ModalScreen):
                         direction = "↓ From Cloud"
                     elif action_type == "conflict":
                         direction = "⚠ Conflict"
-                    else:
+                    elif action_type == "skip":
                         direction = "⊗ Skip"
+                    else:
+                        direction = "?"
                     
                     # Format size
                     size_str = self.format_size(size)
