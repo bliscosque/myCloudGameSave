@@ -35,17 +35,40 @@ class Dashboard(Vertical):
         yield Label("Welcome to Game Save Sync")
         yield Static("")
         
-        # Get actual game count
+        # Get actual game count and last sync
         game_count = 0
+        last_sync = "Never"
+        
         if self.config_manager:
             try:
-                game_count = len(self.config_manager.list_games())
+                games = self.config_manager.list_games()
+                game_count = len(games)
+                
+                # Find most recent sync
+                from datetime import datetime
+                most_recent = None
+                
+                for game_id in games:
+                    game_config = self.config_manager.load_game_config(game_id)
+                    sync_time = game_config.get("sync", {}).get("last_sync")
+                    
+                    if sync_time:
+                        try:
+                            dt = datetime.fromisoformat(sync_time)
+                            if most_recent is None or dt > most_recent:
+                                most_recent = dt
+                        except:
+                            pass
+                
+                if most_recent:
+                    last_sync = most_recent.strftime("%Y-%m-%d %H:%M")
+                    
             except:
                 pass
         
         yield Label("Status: Ready")
         yield Label(f"Configured Games: {game_count}")
-        yield Label("Last Sync: Never")
+        yield Label(f"Last Sync: {last_sync}")
 
 
 class GamesScreen(Vertical):
