@@ -293,20 +293,21 @@
   - File transfer statistics
   - Recent sync history
 
-- [x] **Task 10.2**: Implement interactive sync control
-  - Press Enter on game in Sync screen to start sync workflow
-  - Automatically run dry-run and show results in modal
-  - Display table with: File, Current Action, Size, Direction
-  - Allow user to change direction for each file (↑ to cloud, ↓ from cloud, ⊗ skip)
-  - "Start Sync" button to execute with user's choices
-  - "Cancel" button to abort
-  - Show progress during actual sync execution
+- [x] **Task 10.2**: Implement interactive sync control (partial)
+  - ✓ Press Enter on game in Sync screen to start sync workflow
+  - ✓ Automatically run dry-run and show results in modal
+  - ✓ Display table with: File, Current Action, Size, Direction
+  - ✗ Allow user to change direction for each file (↑ to cloud, ↓ from cloud, ⊗ skip) - MOVED TO 10.3
+  - ✓ "Start Sync" button to execute with user's choices (button present, execution TODO)
+  - ✓ "Cancel" button to abort
+  - ✗ Show progress during actual sync execution - MOVED TO 10.3
 
-- [ ] **Task 10.3**: Implement conflict resolution UI
-  - Visual diff display for conflicts
-  - Side-by-side file comparison
-  - Resolution buttons (keep local/cloud/both)
-  - Batch conflict resolution
+- [ ] **Task 10.3**: Complete interactive sync features
+  - Allow user to change direction for each file (click to cycle: ↑ to cloud, ↓ from cloud, ⊗ skip)
+  - Implement actual sync execution when "Start Sync" is clicked
+  - Show progress bar during sync
+  - Update table with results after sync completes
+  - Handle errors during sync
 
 - [ ] **Task 10.4**: Implement sync logs viewer
   - Scrollable log display
