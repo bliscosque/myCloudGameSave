@@ -186,6 +186,8 @@ class GameSyncTUI(App):
         ("4", "show_settings", "Settings"),
         ("up", "focus_previous", "Previous"),
         ("down", "focus_next", "Next"),
+        ("left", "focus_sidebar", "Sidebar"),
+        ("right", "focus_content", "Content"),
     ]
     
     current_screen = reactive("dashboard")
@@ -282,6 +284,31 @@ class GameSyncTUI(App):
     def action_show_settings(self) -> None:
         """Show settings screen"""
         self.switch_screen("settings")
+    
+    def action_focus_sidebar(self) -> None:
+        """Focus on sidebar navigation"""
+        try:
+            sidebar = self.query_one("Sidebar")
+            buttons = sidebar.query("Button")
+            if buttons:
+                buttons.first().focus()
+        except:
+            pass
+    
+    def action_focus_content(self) -> None:
+        """Focus on content area"""
+        try:
+            content = self.query_one("#content-area")
+            # Try to focus on DataTable if present, otherwise any focusable widget
+            tables = content.query("DataTable")
+            if tables:
+                tables.first().focus()
+            else:
+                focusable = content.query("Button, Input, DataTable")
+                if focusable:
+                    focusable.first().focus()
+        except:
+            pass
 
 
 def main():
