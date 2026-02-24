@@ -173,7 +173,7 @@
 
 ### Milestone 6: Testing & Documentation
 
-- [ ] **Task 6.1**: Write unit tests
+- [x] **Task 6.1**: Write unit tests
   - Test configuration parsing
   - Test file comparison logic
   - Test conflict detection
