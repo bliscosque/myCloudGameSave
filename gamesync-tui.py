@@ -426,9 +426,16 @@ class SyncScreen(Vertical):
     
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """Handle row selection - open sync preview"""
+        # Only handle events from sync-games-table
+        if event.data_table.id != "sync-games-table":
+            return
+        
         try:
             # Get game_id from row key
             game_id = str(event.row_key)
+            
+            # Debug: Show notification
+            self.app.notify(f"Opening sync preview for: {game_id}")
             
             if not game_id or game_id == "":
                 return
@@ -439,7 +446,7 @@ class SyncScreen(Vertical):
                 SyncPreviewScreen(game_id, game_config, self.config_manager)
             )
         except Exception as e:
-            pass
+            self.app.notify(f"Error: {e}", severity="error")
 
 
 class SettingsScreen(Vertical):
