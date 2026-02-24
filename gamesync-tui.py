@@ -235,10 +235,68 @@ class GamesScreen(Vertical):
 class SyncScreen(Vertical):
     """Sync screen"""
     
+    def __init__(self, config_manager):
+        super().__init__()
+        self.config_manager = config_manager
+    
     def compose(self) -> ComposeResult:
-        yield Label("[bold]Sync[/bold]")
+        yield Label("[bold]Sync Dashboard[/bold]")
         yield Static("─" * 40)
-        yield Label("Sync functionality coming soon...")
+        
+        # Sync Status
+        yield Label("\n[bold cyan]Sync Status[/bold cyan]")
+        yield Label("Status: Idle")
+        yield Static("")
+        
+        # Recent Sync History
+        yield Label("[bold cyan]Recent Sync History[/bold cyan]")
+        
+        # Create history table
+        table = DataTable()
+        table.add_columns("Game", "Status", "Files", "Time", "Date")
+        
+        # Load recent syncs from game configs
+        if self.config_manager:
+            try:
+                games = self.config_manager.list_games()
+                sync_history = []
+                
+                for game_id in games:
+                    game_config = self.config_manager.load_game_config(game_id)
+                    last_sync = game_config.get("sync", {}).get("last_sync")
+                    
+                    if last_sync and last_sync != "Never":
+                        try:
+                            from datetime import datetime
+                            dt = datetime.fromisoformat(last_sync)
+                            sync_history.append({
+                                "game": game_config.get("game", {}).get("name", game_id),
+                                "date": dt,
+                                "game_id": game_id
+                            })
+                        except:
+                            pass
+                
+                # Sort by date (most recent first)
+                sync_history.sort(key=lambda x: x["date"], reverse=True)
+                
+                # Add to table (limit to 10 most recent)
+                for sync in sync_history[:10]:
+                    table.add_row(
+                        sync["game"],
+                        "✓ Success",
+                        "-",  # Files count not tracked yet
+                        sync["date"].strftime("%H:%M:%S"),
+                        sync["date"].strftime("%Y-%m-%d")
+                    )
+                
+                if not sync_history:
+                    table.add_row("No sync history", "", "", "", "")
+                    
+            except Exception as e:
+                table.add_row(f"Error loading history: {e}", "", "", "", "")
+        
+        yield table
 
 
 class SettingsScreen(Vertical):
@@ -373,7 +431,7 @@ class GameSyncTUI(App):
         elif screen_name == "games":
             content_area.mount(GamesScreen(self.config_manager, self))
         elif screen_name == "sync":
-            content_area.mount(SyncScreen())
+            content_area.mount(SyncScreen(self.config_manager))
         elif screen_name == "settings":
             content_area.mount(SettingsScreen())
         
