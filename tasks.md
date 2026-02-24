@@ -293,7 +293,7 @@
   - File transfer statistics
   - Recent sync history
 
-- [ ] **Task 10.2**: Implement interactive sync control
+- [x] **Task 10.2**: Implement interactive sync control
   - Press Enter on game in Sync screen to start sync workflow
   - Automatically run dry-run and show results in modal
   - Display table with: File, Current Action, Size, Direction
@@ -387,9 +387,9 @@
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (3/3 tasks) ✓
 - Milestone 9: Game Management UI (2/3 tasks) - Tasks 9.3, 9.4 skipped
-- Milestone 10: Sync Operations UI (1/4 tasks)
+- Milestone 10: Sync Operations UI (2/4 tasks)
 
-**Total Phase 2 Progress: 6/18 tasks completed (33%)**
+**Total Phase 2 Progress: 7/18 tasks completed (39%)**
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (0/3 tasks)

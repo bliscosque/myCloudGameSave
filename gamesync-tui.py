@@ -3,15 +3,159 @@
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
-from textual.widgets import Header, Footer, Static, Label, Button, DataTable
+from textual.widgets import Header, Footer, Static, Label, Button, DataTable, ProgressBar
 from textual.reactive import reactive
 from textual.screen import ModalScreen
+from pathlib import Path
 
 from src.config_manager import ConfigManager
 from src.logger import init_logger, get_logger
+from src.sync_engine import SyncEngine
 
 
-class Sidebar(Vertical):
+class SyncPreviewScreen(ModalScreen):
+    """Modal screen for interactive sync preview and control"""
+    
+    CSS = """
+    SyncPreviewScreen {
+        align: center middle;
+    }
+    
+    #sync-preview-container {
+        width: 90;
+        height: auto;
+        max-height: 90%;
+        background: $panel;
+        border: thick $primary;
+        padding: 1 2;
+    }
+    
+    #sync-preview-table {
+        width: 100%;
+        height: 20;
+    }
+    
+    #sync-buttons {
+        width: 100%;
+        height: auto;
+        align: center middle;
+        margin-top: 1;
+    }
+    """
+    
+    def __init__(self, game_id: str, game_config: dict, config_manager):
+        super().__init__()
+        self.game_id = game_id
+        self.game_config = game_config
+        self.config_manager = config_manager
+        self.sync_actions = {}  # Store user's action choices per file
+        
+    def compose(self) -> ComposeResult:
+        game_name = self.game_config.get("game", {}).get("name", self.game_id)
+        
+        yield Container(
+            Label(f"[bold cyan]Sync Preview: {game_name}[/bold cyan]"),
+            Static("Running dry-run..."),
+            ScrollableContainer(
+                DataTable(id="sync-preview-table", cursor_type="row"),
+                id="sync-preview-content"
+            ),
+            Horizontal(
+                Button("Start Sync", variant="primary", id="start-sync-btn"),
+                Button("Cancel", variant="default", id="cancel-sync-btn"),
+                id="sync-buttons"
+            ),
+            id="sync-preview-container"
+        )
+    
+    def on_mount(self) -> None:
+        """Run dry-run when modal opens"""
+        self.run_dry_run()
+    
+    def run_dry_run(self) -> None:
+        """Execute dry-run and populate table"""
+        try:
+            # Get paths
+            local_dir = Path(self.game_config.get("paths", {}).get("local", ""))
+            cloud_base = Path(self.config_manager.load_config().get("general", {}).get("cloud_directory", ""))
+            cloud_subdir = self.game_config.get("paths", {}).get("cloud", "")
+            cloud_dir = cloud_base / cloud_subdir
+            backup_dir = self.config_manager.backups_dir / self.game_id
+            last_sync = self.game_config.get("sync", {}).get("last_sync")
+            
+            # Run sync engine in dry-run mode
+            sync_engine = SyncEngine()
+            result = sync_engine.sync_files(
+                local_dir=local_dir,
+                cloud_dir=cloud_dir,
+                backup_dir=backup_dir,
+                last_sync=last_sync,
+                dry_run=True
+            )
+            
+            # Populate table
+            table = self.query_one("#sync-preview-table", DataTable)
+            table.add_columns("File", "Action", "Size", "Direction")
+            
+            actions = result.get("actions", [])
+            if actions:
+                for action in actions:
+                    filename = action.get("file", "")
+                    action_type = action.get("action", "")
+                    size = action.get("size", 0)
+                    
+                    # Determine direction symbol
+                    if action_type == "copy_to_cloud":
+                        direction = "↑ To Cloud"
+                    elif action_type == "copy_to_local":
+                        direction = "↓ From Cloud"
+                    elif action_type == "conflict":
+                        direction = "⚠ Conflict"
+                    else:
+                        direction = "⊗ Skip"
+                    
+                    # Format size
+                    size_str = self.format_size(size)
+                    
+                    # Store default action
+                    self.sync_actions[filename] = action_type
+                    
+                    table.add_row(filename, action_type, size_str, direction, key=filename)
+            else:
+                table.add_row("No changes needed", "", "", "")
+            
+            # Update status message
+            status = self.query_one(Static)
+            status.update(f"Found {len(actions)} file(s) to sync")
+            
+        except Exception as e:
+            table = self.query_one("#sync-preview-table", DataTable)
+            table.add_columns("Error", "", "", "")
+            table.add_row(f"Error running dry-run: {e}", "", "", "")
+    
+    def format_size(self, size: int) -> str:
+        """Format file size in human-readable format"""
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024.0:
+                return f"{size:.1f} {unit}"
+            size /= 1024.0
+        return f"{size:.1f} TB"
+    
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button clicks"""
+        if event.button.id == "cancel-sync-btn":
+            self.dismiss()
+        elif event.button.id == "start-sync-btn":
+            self.execute_sync()
+    
+    def execute_sync(self) -> None:
+        """Execute actual sync with user's choices"""
+        # TODO: Implement actual sync execution
+        # For now, just close the modal
+        self.dismiss()
+
+
+class GameDetailsScreen(ModalScreen):
     """Navigation sidebar"""
     
     def compose(self) -> ComposeResult:
@@ -235,68 +379,67 @@ class GamesScreen(Vertical):
 class SyncScreen(Vertical):
     """Sync screen"""
     
-    def __init__(self, config_manager):
+    def __init__(self, config_manager, parent_app):
         super().__init__()
         self.config_manager = config_manager
+        self.parent_app = parent_app
     
     def compose(self) -> ComposeResult:
         yield Label("[bold]Sync Dashboard[/bold]")
         yield Static("─" * 40)
-        
-        # Sync Status
-        yield Label("\n[bold cyan]Sync Status[/bold cyan]")
-        yield Label("Status: Idle")
+        yield Label("Press Enter on a game to start sync")
         yield Static("")
         
-        # Recent Sync History
-        yield Label("[bold cyan]Recent Sync History[/bold cyan]")
+        # Game list for syncing
+        yield Label("[bold cyan]Games[/bold cyan]")
+        table = DataTable(cursor_type="row", id="sync-games-table")
+        table.add_columns("Game", "Status", "Last Sync")
         
-        # Create history table
-        table = DataTable()
-        table.add_columns("Game", "Status", "Files", "Time", "Date")
-        
-        # Load recent syncs from game configs
+        # Load games
         if self.config_manager:
             try:
                 games = self.config_manager.list_games()
-                sync_history = []
-                
                 for game_id in games:
                     game_config = self.config_manager.load_game_config(game_id)
-                    last_sync = game_config.get("sync", {}).get("last_sync")
+                    
+                    name = game_config.get("game", {}).get("name", game_id)
+                    enabled = game_config.get("sync", {}).get("enabled", True)
+                    status = "✓ Enabled" if enabled else "✗ Disabled"
+                    last_sync = game_config.get("sync", {}).get("last_sync", "Never")
                     
                     if last_sync and last_sync != "Never":
                         try:
                             from datetime import datetime
                             dt = datetime.fromisoformat(last_sync)
-                            sync_history.append({
-                                "game": game_config.get("game", {}).get("name", game_id),
-                                "date": dt,
-                                "game_id": game_id
-                            })
+                            last_sync = dt.strftime("%Y-%m-%d %H:%M")
                         except:
                             pass
-                
-                # Sort by date (most recent first)
-                sync_history.sort(key=lambda x: x["date"], reverse=True)
-                
-                # Add to table (limit to 10 most recent)
-                for sync in sync_history[:10]:
-                    table.add_row(
-                        sync["game"],
-                        "✓ Success",
-                        "-",  # Files count not tracked yet
-                        sync["date"].strftime("%H:%M:%S"),
-                        sync["date"].strftime("%Y-%m-%d")
-                    )
-                
-                if not sync_history:
-                    table.add_row("No sync history", "", "", "", "")
                     
+                    table.add_row(name, status, last_sync, key=game_id)
+                
+                if not games:
+                    table.add_row("No games configured", "", "")
             except Exception as e:
-                table.add_row(f"Error loading history: {e}", "", "", "", "")
+                table.add_row(f"Error: {e}", "", "")
         
         yield table
+    
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        """Handle row selection - open sync preview"""
+        try:
+            # Get game_id from row key
+            game_id = str(event.row_key)
+            
+            if not game_id or game_id == "":
+                return
+            
+            # Load game config and open sync preview
+            game_config = self.config_manager.load_game_config(game_id)
+            self.parent_app.push_screen(
+                SyncPreviewScreen(game_id, game_config, self.config_manager)
+            )
+        except Exception as e:
+            pass
 
 
 class SettingsScreen(Vertical):
@@ -431,7 +574,7 @@ class GameSyncTUI(App):
         elif screen_name == "games":
             content_area.mount(GamesScreen(self.config_manager, self))
         elif screen_name == "sync":
-            content_area.mount(SyncScreen(self.config_manager))
+            content_area.mount(SyncScreen(self.config_manager, self))
         elif screen_name == "settings":
             content_area.mount(SettingsScreen())
         
