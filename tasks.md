@@ -293,11 +293,14 @@
   - File transfer statistics
   - Recent sync history
 
-- [ ] **Task 10.2**: Implement sync control panel
-  - Start/stop sync buttons
-  - Select games to sync (checkboxes)
-  - Sync all button
-  - Dry-run toggle
+- [ ] **Task 10.2**: Implement interactive sync control
+  - Press Enter on game in Sync screen to start sync workflow
+  - Automatically run dry-run and show results in modal
+  - Display table with: File, Current Action, Size, Direction
+  - Allow user to change direction for each file (↑ to cloud, ↓ from cloud, ⊗ skip)
+  - "Start Sync" button to execute with user's choices
+  - "Cancel" button to abort
+  - Show progress during actual sync execution
 
 - [ ] **Task 10.3**: Implement conflict resolution UI
   - Visual diff display for conflicts
