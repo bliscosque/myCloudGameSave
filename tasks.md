@@ -273,7 +273,7 @@
   - Show full game information
   - Display local and cloud paths
   - Show sync statistics
-  - Edit game configuration
+  - (Edit functionality deferred to Task 11.2)
 
 - [ ] **Task 9.3**: Implement add game dialog
   - Interactive form for manual game addition
