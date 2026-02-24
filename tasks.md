@@ -240,101 +240,6 @@
 
 ---
 
-## Phase 2: GUI Implementation (Future)
-
-### Milestone 8: GUI Foundation
-
-- [ ] **Task 8.1**: Set up Qt project
-  - Choose Qt binding (PyQt/PySide or Qt for Rust)
-  - Create GUI project structure
-  - Set up build system
-
-- [ ] **Task 8.2**: Refactor core logic for GUI
-  - Separate business logic from CLI
-  - Create service layer / API
-  - Implement event callbacks for progress updates
-
-- [ ] **Task 8.3**: Design GUI mockups
-  - Main window layout
-  - Game list view
-  - Configuration dialogs
-  - Sync progress views
-
-### Milestone 9: GUI Implementation
-
-- [ ] **Task 9.1**: Implement main window
-  - Game list with status indicators
-  - Menu bar and toolbar
-  - Status bar
-
-- [ ] **Task 9.2**: Implement game management dialogs
-  - Add game dialog
-  - Edit game configuration dialog
-  - Game detection wizard
-
-- [ ] **Task 9.3**: Implement sync interface
-  - Sync progress dialog
-  - Conflict resolution dialog
-  - Sync history view
-
-- [ ] **Task 9.4**: Implement settings panel
-  - Global configuration editor
-  - Preferences dialog
-  - Theme selection
-
-### Milestone 10: GUI Polish & Release
-
-- [ ] **Task 10.1**: GUI testing
-  - Usability testing
-  - Cross-platform GUI testing
-  - Accessibility testing
-
-- [ ] **Task 10.2**: GUI documentation
-  - User guide with screenshots
-  - Video tutorials
-
-- [ ] **Task 10.3**: Package GUI application
-  - Create installers for Windows
-  - Create packages for Linux distributions
-  - Create application icons and assets
-
----
-
-## Optional Enhancements (Backlog)
-
-- [ ] **Enhancement 1**: Automatic file watching
-  - Implement file system watcher
-  - Auto-sync on save file changes
-  - Debounce rapid changes
-
-- [ ] **Enhancement 2**: Advanced sync options
-  - File filtering by pattern
-  - Selective file sync within game
-  - Compression for cloud storage
-
-- [ ] **Enhancement 3**: Additional launcher support
-  - Native Steam games detection
-  - Epic Games Store detection
-  - GOG Galaxy detection
-  - Origin/EA App detection
-
-- [ ] **Enhancement 4**: Cloud provider integration
-  - Direct S3 integration
-  - Direct Google Drive integration
-  - Eliminate need for rclone mounting
-
-- [ ] **Enhancement 5**: Sync profiles
-  - Multiple cloud destinations
-  - Different sync rules per profile
-  - Profile switching
-
-- [ ] **Enhancement 6**: Statistics and reporting
-  - Sync history tracking
-  - Data usage statistics
-  - Sync success/failure reports
-
----
-
 ## Phase 2: TUI Implementation (Textual)
 
 ### Milestone 8: TUI Foundation
@@ -485,8 +390,46 @@
 
 **Total Phase 2 Progress: 0/18 tasks completed (0%)**
 
-**Phase 3 - GUI Implementation**
+**Phase 3 - GUI Implementation (Qt)**
 - To be detailed when Phase 2 is complete
+- Will include: Qt setup, main window, game management, sync interface, system tray integration
+
+---
+
+## Optional Enhancements (Backlog)
+
+These enhancements can be implemented in any phase as needed:
+
+- [ ] **Enhancement 1**: Automatic file watching
+  - Implement file system watcher
+  - Auto-sync on save file changes
+  - Debounce rapid changes
+
+- [ ] **Enhancement 2**: Advanced sync options
+  - File filtering by pattern
+  - Selective file sync within game
+  - Compression for cloud storage
+
+- [ ] **Enhancement 3**: Additional launcher support
+  - Native Steam games detection
+  - Epic Games Store detection
+  - GOG Galaxy detection
+  - Origin/EA App detection
+
+- [ ] **Enhancement 4**: Cloud provider integration
+  - Direct S3 integration
+  - Direct Google Drive integration
+  - Eliminate need for rclone mounting
+
+- [ ] **Enhancement 5**: Sync profiles
+  - Multiple cloud destinations
+  - Different sync rules per profile
+  - Profile switching
+
+- [ ] **Enhancement 6**: Statistics and reporting
+  - Sync history tracking
+  - Data usage statistics
+  - Sync success/failure reports
 
 ---
 
@@ -497,4 +440,4 @@
 - Testing should be done incrementally, not just at Milestone 6
 - Update this document as tasks are completed by checking the boxes
 - Add notes or blockers for tasks as needed
-- Phase 2 (TUI) tasks are subject to review and adjustment before implementation
+- Phase 2 (TUI) and Phase 3 (GUI) tasks are subject to review and adjustment before implementation
