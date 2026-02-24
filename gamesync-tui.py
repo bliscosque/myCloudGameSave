@@ -383,6 +383,7 @@ class SyncScreen(Vertical):
         super().__init__()
         self.config_manager = config_manager
         self.parent_app = parent_app
+        self.game_id_map = {}  # Map row keys to game IDs
     
     def compose(self) -> ComposeResult:
         yield Label("[bold]Sync Dashboard[/bold]")
@@ -399,6 +400,7 @@ class SyncScreen(Vertical):
         if self.config_manager:
             try:
                 games = self.config_manager.list_games()
+                row_num = 0
                 for game_id in games:
                     game_config = self.config_manager.load_game_config(game_id)
                     
@@ -415,7 +417,11 @@ class SyncScreen(Vertical):
                         except:
                             pass
                     
-                    table.add_row(name, status, last_sync, key=game_id)
+                    # Use row number as key and map it to game_id
+                    row_key = f"row_{row_num}"
+                    self.game_id_map[row_key] = game_id
+                    table.add_row(name, status, last_sync, key=row_key)
+                    row_num += 1
                 
                 if not games:
                     table.add_row("No games configured", "", "")
@@ -431,13 +437,14 @@ class SyncScreen(Vertical):
             return
         
         try:
-            # Get game_id from row key
-            game_id = str(event.row_key)
+            # Get game_id from mapping
+            row_key = str(event.row_key)
+            game_id = self.game_id_map.get(row_key)
             
             # Debug: Show notification
             self.app.notify(f"Opening sync preview for: {game_id}")
             
-            if not game_id or game_id == "":
+            if not game_id:
                 return
             
             # Load game config and open sync preview
