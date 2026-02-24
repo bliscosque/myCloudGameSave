@@ -120,6 +120,8 @@ class GameSyncTUI(App):
         ("2", "show_games", "Games"),
         ("3", "show_sync", "Sync"),
         ("4", "show_settings", "Settings"),
+        ("up", "focus_previous", "Previous"),
+        ("down", "focus_next", "Next"),
     ]
     
     current_screen = reactive("dashboard")
