@@ -36,6 +36,7 @@ def main():
         'tests/test_detector.py',
         'tests/test_sync.py',
         'tests/test_conflict.py',
+        'tests/test_integration.py',
     ]
     
     print("="*60)

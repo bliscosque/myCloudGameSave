@@ -68,10 +68,19 @@ The project has comprehensive unit tests covering all core functionality. All te
   - Keep both (rename with suffixes)
 - Conflict tracking and listing
 
+### 6. Integration Tests (`test_integration.py`)
+**Tests: 5/5 passing**
+
+- End-to-end sync workflow (local → cloud → local)
+- Conflict resolution workflow (detect, resolve, verify)
+- Game detection workflow (initialization and structure)
+- Backup workflow (automatic backup during sync)
+- Dry-run workflow (no changes made)
+
 ## Total Test Coverage
 
-**Total Tests: 44 tests across 5 test suites**
-- ✓ All 44 tests passing
+**Total Tests: 49 tests across 6 test suites**
+- ✓ All 49 tests passing
 - ✓ 100% pass rate
 
 ## Test Execution
@@ -88,6 +97,7 @@ Run individual test suites:
 ~/vscode/venv/bin/python tests/test_detector.py
 ~/vscode/venv/bin/python tests/test_sync.py
 ~/vscode/venv/bin/python tests/test_conflict.py
+~/vscode/venv/bin/python tests/test_integration.py
 ```
 
 ## Test Organization
@@ -95,13 +105,14 @@ Run individual test suites:
 Tests are organized in the `tests/` directory following Python best practices:
 ```
 tests/
-├── __init__.py           # Test package initialization
-├── run_tests.py          # Unified test runner
-├── test_config.py        # Configuration tests
-├── test_logger.py        # Logger tests
-├── test_detector.py      # Game detector tests
-├── test_sync.py          # Sync engine tests
-└── test_conflict.py      # Conflict resolver tests
+├── __init__.py              # Test package initialization
+├── run_tests.py             # Unified test runner
+├── test_config.py           # Configuration tests (7 tests)
+├── test_logger.py           # Logger tests (5 tests)
+├── test_detector.py         # Game detector tests (9 tests)
+├── test_sync.py             # Sync engine tests (14 tests)
+├── test_conflict.py         # Conflict resolver tests (9 tests)
+└── test_integration.py      # Integration tests (5 tests)
 ```
 
 ## Coverage Areas
