@@ -115,9 +115,13 @@ class SyncPreviewScreen(ModalScreen):
                 dry_run=True
             )
             
-            # Debug log result
+            # Debug log result with file details
             with open("/tmp/tui_debug.log", "a") as f:
                 f.write(f"Result: {result}\n")
+                f.write(f"\nFile details:\n")
+                for action in result.get("actions", []):
+                    f.write(f"  {action.get('filename')}: {action.get('action')} "
+                           f"(local: {action.get('local_mtime')}, cloud: {action.get('cloud_mtime')})\n")
                 f.write(f"Actions: {result.get('actions', [])}\n")
             
             # Populate table

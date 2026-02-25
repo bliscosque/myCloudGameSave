@@ -164,8 +164,14 @@ class SyncEngine:
                 if cloud_modified and not local_modified:
                     return SyncAction.COPY_TO_LOCAL
                 
-                # Neither modified
-                return SyncAction.SKIP
+                # Neither modified since last sync - compare files directly
+                # This handles cases where last_sync was updated but files weren't actually synced
+                if local_mtime > cloud_mtime:
+                    return SyncAction.COPY_TO_CLOUD
+                elif cloud_mtime > local_mtime:
+                    return SyncAction.COPY_TO_LOCAL
+                else:
+                    return SyncAction.SKIP
             
             # No last_sync_time, use simple timestamp comparison
             if local_mtime > cloud_mtime:
