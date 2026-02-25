@@ -1035,7 +1035,7 @@ class SettingsScreen(Vertical):
         
         # Theme
         yield Label("\n[bold cyan]Theme[/bold cyan]")
-        yield Label("Current theme: " + ("Dark" if self.app.dark else "Light"))
+        yield Label("Toggle between light and dark theme", id="theme-label")
         yield Button("Toggle Theme", id="toggle-theme-btn", variant="primary")
         
         # Other Actions
@@ -1098,15 +1098,7 @@ class SettingsScreen(Vertical):
     def toggle_theme(self) -> None:
         """Toggle dark/light theme"""
         self.app.action_toggle_dark()
-        theme = "Dark" if self.app.dark else "Light"
-        self.show_status(f"[green]Theme changed to {theme}[/green]")
-        
-        # Update label
-        labels = self.query("Label")
-        for label in labels:
-            if "Current theme:" in str(label.renderable):
-                label.update(f"Current theme: {theme}")
-                break
+        self.show_status("[green]Theme toggled[/green]")
     
     def show_status(self, message: str) -> None:
         """Show status message"""
