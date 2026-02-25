@@ -213,18 +213,21 @@ class SyncPreviewScreen(ModalScreen):
             new_action = self.cycle_action(current_action)
             self.sync_actions[row_key] = new_action
             
-            # Update table row in place
+            # Update table row - get column keys
             table = event.data_table
-            coordinate = table.coordinate_to_cell_key(event.cursor_coordinate)
+            columns = list(table.columns.keys())
             
-            # Update action column (column 1)
-            table.update_cell(row_key, "Action", new_action)
-            
-            # Update direction column (column 3)
-            table.update_cell(row_key, "Direction", self.get_direction_symbol(new_action))
+            # Update action column (index 1) and direction column (index 3)
+            if len(columns) >= 4:
+                table.update_cell(row_key, columns[1], new_action)
+                table.update_cell(row_key, columns[3], self.get_direction_symbol(new_action))
             
         except Exception as e:
-            pass
+            # Log error for debugging
+            with open("/tmp/tui_debug.log", "a") as f:
+                import traceback
+                f.write(f"\nError updating cell: {e}\n")
+                f.write(traceback.format_exc())
     
     def format_size(self, size: int) -> str:
         """Format file size in human-readable format"""
