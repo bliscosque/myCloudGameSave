@@ -498,10 +498,8 @@ class GamesScreen(Vertical):
     def compose(self) -> ComposeResult:
         yield Label("[bold]Games[/bold]")
         yield Static("─" * 40)
-        yield Horizontal(
-            Label("Press Enter to view details"),
-            Button("Add Game", id="add-game-btn", variant="success"),
-        )
+        yield Label("Press Enter to view details")
+        yield Button("Add Game", id="add-game-btn", variant="success")
         yield Static("")
         
         # Create data table
