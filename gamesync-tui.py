@@ -1006,19 +1006,112 @@ class SettingsScreen(Vertical):
     def __init__(self, parent_app):
         super().__init__()
         self.parent_app = parent_app
+        self.config_manager = parent_app.config_manager
     
     def compose(self) -> ComposeResult:
+        # Load current config
+        config = self.config_manager.load_config()
+        cloud_dir = config.get("general", {}).get("cloud_directory", "")
+        log_level = config.get("general", {}).get("log_level", "info")
+        
         yield Label("[bold]Settings[/bold]")
         yield Static("─" * 40)
-        yield Static("")
+        
+        # Cloud Directory
+        yield Label("\n[bold cyan]Cloud Directory[/bold cyan]")
+        yield Label("Path to cloud-mounted directory:")
+        yield Input(value=cloud_dir, placeholder="/path/to/cloud", id="cloud-dir-input")
+        yield Button("Save Cloud Directory", id="save-cloud-dir-btn", variant="success")
+        
+        # Logging
+        yield Label("\n[bold cyan]Logging[/bold cyan]")
+        yield Label("Log Level:")
+        yield Select(
+            [("Debug", "debug"), ("Info", "info"), ("Warning", "warning"), ("Error", "error")],
+            value=log_level.lower(),
+            id="log-level-select"
+        )
+        yield Button("Save Log Level", id="save-log-level-btn", variant="success")
+        
+        # Theme
+        yield Label("\n[bold cyan]Theme[/bold cyan]")
+        yield Label("Current theme: " + ("Dark" if self.app.dark else "Light"))
+        yield Button("Toggle Theme", id="toggle-theme-btn", variant="primary")
+        
+        # Other Actions
+        yield Label("\n[bold cyan]Other Actions[/bold cyan]")
         yield Button("View Logs", id="view-logs-btn", variant="primary")
+        
         yield Static("")
-        yield Label("Other settings coming soon...")
+        yield Static("[dim]Status messages will appear here[/dim]", id="settings-status")
     
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button clicks"""
         if event.button.id == "view-logs-btn":
-            self.parent_app.push_screen(LogViewerScreen(self.parent_app.config_manager))
+            self.parent_app.push_screen(LogViewerScreen(self.config_manager))
+        elif event.button.id == "save-cloud-dir-btn":
+            self.save_cloud_directory()
+        elif event.button.id == "save-log-level-btn":
+            self.save_log_level()
+        elif event.button.id == "toggle-theme-btn":
+            self.toggle_theme()
+    
+    def save_cloud_directory(self) -> None:
+        """Save cloud directory setting"""
+        try:
+            cloud_dir = self.query_one("#cloud-dir-input", Input).value.strip()
+            
+            if not cloud_dir:
+                self.show_status("[red]Cloud directory cannot be empty[/red]")
+                return
+            
+            # Validate path exists
+            from pathlib import Path
+            if not Path(cloud_dir).exists():
+                self.show_status("[yellow]Warning: Directory does not exist[/yellow]")
+            
+            # Update config
+            config = self.config_manager.load_config()
+            config["general"]["cloud_directory"] = cloud_dir
+            self.config_manager.save_config(config)
+            
+            self.show_status("[green]Cloud directory saved successfully[/green]")
+            
+        except Exception as e:
+            self.show_status(f"[red]Error: {e}[/red]")
+    
+    def save_log_level(self) -> None:
+        """Save log level setting"""
+        try:
+            log_level = self.query_one("#log-level-select", Select).value
+            
+            # Update config
+            config = self.config_manager.load_config()
+            config["general"]["log_level"] = log_level
+            self.config_manager.save_config(config)
+            
+            self.show_status("[green]Log level saved successfully (restart to apply)[/green]")
+            
+        except Exception as e:
+            self.show_status(f"[red]Error: {e}[/red]")
+    
+    def toggle_theme(self) -> None:
+        """Toggle dark/light theme"""
+        self.app.action_toggle_dark()
+        theme = "Dark" if self.app.dark else "Light"
+        self.show_status(f"[green]Theme changed to {theme}[/green]")
+        
+        # Update label
+        labels = self.query("Label")
+        for label in labels:
+            if "Current theme:" in str(label.renderable):
+                label.update(f"Current theme: {theme}")
+                break
+    
+    def show_status(self, message: str) -> None:
+        """Show status message"""
+        status = self.query_one("#settings-status", Static)
+        status.update(message)
 
 
 class LogViewerScreen(ModalScreen):
