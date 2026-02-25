@@ -41,6 +41,12 @@ class SyncPreviewScreen(ModalScreen):
         align: center middle;
         margin-top: 1;
     }
+    
+    #progress-container {
+        width: 100%;
+        height: auto;
+        margin-top: 1;
+    }
     """
     
     def __init__(self, game_id: str, game_config: dict, config_manager):
@@ -49,16 +55,23 @@ class SyncPreviewScreen(ModalScreen):
         self.game_config = game_config
         self.config_manager = config_manager
         self.sync_actions = {}  # Store user's action choices per file
+        self.file_list = []  # Store file info for sync execution
+        self.syncing = False  # Track if sync is in progress
         
     def compose(self) -> ComposeResult:
         game_name = self.game_config.get("game", {}).get("name", self.game_id)
         
         yield Container(
             Label(f"[bold cyan]Sync Preview: {game_name}[/bold cyan]"),
-            Static("Running dry-run..."),
+            Static("Running dry-run...", id="status-message"),
+            Label("Click on a row to change its action"),
             ScrollableContainer(
                 DataTable(id="sync-preview-table", cursor_type="row"),
                 id="sync-preview-content"
+            ),
+            Container(
+                ProgressBar(id="sync-progress", total=100, show_eta=False),
+                id="progress-container"
             ),
             Horizontal(
                 Button("Start Sync", variant="primary", id="start-sync-btn"),
@@ -114,27 +127,27 @@ class SyncPreviewScreen(ModalScreen):
             actions = result.get("actions", [])
             if actions:
                 for idx, action in enumerate(actions):
-                    filename = action.get("filename", "")  # Changed from "file" to "filename"
+                    filename = action.get("filename", "")
                     action_type = action.get("action", "")
-                    size = action.get("local_size", 0)  # Changed from "size" to "local_size"
+                    size = action.get("local_size", 0)
+                    
+                    # Store file info for later sync execution
+                    self.file_list.append({
+                        "filename": filename,
+                        "original_action": action_type,
+                        "local_size": action.get("local_size", 0),
+                        "cloud_size": action.get("cloud_size", 0),
+                        "index": idx
+                    })
                     
                     # Determine direction symbol
-                    if action_type == "copy_to_cloud":
-                        direction = "↑ To Cloud"
-                    elif action_type == "copy_to_local":
-                        direction = "↓ From Cloud"
-                    elif action_type == "conflict":
-                        direction = "⚠ Conflict"
-                    elif action_type == "skip":
-                        direction = "⊗ Skip"
-                    else:
-                        direction = "?"
+                    direction = self.get_direction_symbol(action_type)
                     
                     # Format size
                     size_str = self.format_size(size)
                     
                     # Store default action
-                    self.sync_actions[filename] = action_type
+                    self.sync_actions[f"file_{idx}"] = action_type
                     
                     # Use sequential key to avoid duplicates
                     table.add_row(filename, action_type, size_str, direction, key=f"file_{idx}")
@@ -142,8 +155,12 @@ class SyncPreviewScreen(ModalScreen):
                 table.add_row("No changes needed", "", "", "")
             
             # Update status message
-            status = self.query_one(Static)
+            status = self.query_one("#status-message", Static)
             status.update(f"Found {len(actions)} file(s) to sync")
+            
+            # Hide progress bar initially
+            progress_container = self.query_one("#progress-container")
+            progress_container.display = False
             
         except Exception as e:
             # Log error
@@ -155,6 +172,55 @@ class SyncPreviewScreen(ModalScreen):
             table = self.query_one("#sync-preview-table", DataTable)
             table.add_columns("Error", "", "", "")
             table.add_row(f"Error running dry-run: {e}", "", "", "")
+    
+    def get_direction_symbol(self, action_type: str) -> str:
+        """Get direction symbol for action type"""
+        if action_type == "copy_to_cloud":
+            return "↑ To Cloud"
+        elif action_type == "copy_to_local":
+            return "↓ From Cloud"
+        elif action_type == "conflict":
+            return "⚠ Conflict"
+        elif action_type == "skip":
+            return "⊗ Skip"
+        else:
+            return "?"
+    
+    def cycle_action(self, current_action: str) -> str:
+        """Cycle to next action: skip → to_cloud → to_local → skip"""
+        if current_action == "skip":
+            return "copy_to_cloud"
+        elif current_action == "copy_to_cloud":
+            return "copy_to_local"
+        elif current_action == "copy_to_local":
+            return "skip"
+        else:
+            return "skip"
+    
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        """Handle row click - cycle through actions"""
+        if self.syncing:
+            return  # Don't allow changes during sync
+        
+        try:
+            row_key = event.row_key.value if hasattr(event.row_key, 'value') else str(event.row_key)
+            
+            # Get current action and cycle it
+            current_action = self.sync_actions.get(row_key, "skip")
+            new_action = self.cycle_action(current_action)
+            self.sync_actions[row_key] = new_action
+            
+            # Update table row
+            table = event.data_table
+            row_data = list(table.get_row(event.row_key))
+            row_data[1] = new_action  # Update action column
+            row_data[3] = self.get_direction_symbol(new_action)  # Update direction column
+            
+            table.remove_row(event.row_key)
+            table.add_row(*row_data, key=row_key)
+            
+        except Exception as e:
+            pass
     
     def format_size(self, size: int) -> str:
         """Format file size in human-readable format"""
@@ -169,13 +235,91 @@ class SyncPreviewScreen(ModalScreen):
         if event.button.id == "cancel-sync-btn":
             self.dismiss()
         elif event.button.id == "start-sync-btn":
-            self.execute_sync()
+            if not self.syncing:
+                self.execute_sync()
     
     def execute_sync(self) -> None:
         """Execute actual sync with user's choices"""
-        # TODO: Implement actual sync execution
-        # For now, just close the modal
-        self.dismiss()
+        self.syncing = True
+        
+        try:
+            # Disable buttons during sync
+            start_btn = self.query_one("#start-sync-btn", Button)
+            start_btn.disabled = True
+            
+            # Show progress bar
+            progress_container = self.query_one("#progress-container")
+            progress_container.display = True
+            progress_bar = self.query_one("#sync-progress", ProgressBar)
+            
+            # Update status
+            status = self.query_one("#status-message", Static)
+            status.update("Syncing files...")
+            
+            # Get paths
+            local_dir = Path(self.game_config.get("paths", {}).get("local", ""))
+            cloud_base = Path(self.config_manager.load_config().get("general", {}).get("cloud_directory", ""))
+            cloud_subdir = self.game_config.get("paths", {}).get("cloud", "")
+            cloud_dir = cloud_base / cloud_subdir
+            backup_dir = self.config_manager.backups_dir / self.game_id
+            
+            # Create sync engine
+            sync_engine = SyncEngine()
+            
+            # Process each file according to user's choice
+            total_files = len(self.file_list)
+            synced_count = 0
+            error_count = 0
+            
+            for idx, file_info in enumerate(self.file_list):
+                filename = file_info["filename"]
+                row_key = f"file_{idx}"
+                action = self.sync_actions.get(row_key, "skip")
+                
+                # Update progress
+                progress = int((idx / total_files) * 100)
+                progress_bar.update(progress=progress)
+                
+                if action == "skip":
+                    continue
+                
+                try:
+                    local_file = local_dir / filename
+                    cloud_file = cloud_dir / filename
+                    
+                    if action == "copy_to_cloud":
+                        # Copy local to cloud
+                        if local_file.exists():
+                            sync_engine.copy_file(local_file, cloud_file)
+                            synced_count += 1
+                    elif action == "copy_to_local":
+                        # Copy cloud to local
+                        if cloud_file.exists():
+                            sync_engine.copy_file(cloud_file, local_file)
+                            synced_count += 1
+                            
+                except Exception as e:
+                    error_count += 1
+            
+            # Update last_sync timestamp
+            from datetime import datetime
+            self.game_config["sync"]["last_sync"] = datetime.now().isoformat()
+            self.config_manager.save_game_config(self.game_id, self.game_config)
+            
+            # Complete
+            progress_bar.update(progress=100)
+            status.update(f"Sync complete! {synced_count} files synced, {error_count} errors")
+            
+            # Re-enable cancel button (now acts as close)
+            cancel_btn = self.query_one("#cancel-sync-btn", Button)
+            cancel_btn.label = "Close"
+            
+        except Exception as e:
+            status = self.query_one("#status-message", Static)
+            status.update(f"Sync failed: {e}")
+        
+        finally:
+            self.syncing = False
 
 
 class Sidebar(Vertical):
