@@ -3,7 +3,7 @@
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
-from textual.widgets import Header, Footer, Static, Label, Button, DataTable, ProgressBar
+from textual.widgets import Header, Footer, Static, Label, Button, DataTable, ProgressBar, Input, Select
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from pathlib import Path
@@ -637,10 +637,168 @@ class SyncScreen(Vertical):
 class SettingsScreen(Vertical):
     """Settings screen"""
     
+    def __init__(self, parent_app):
+        super().__init__()
+        self.parent_app = parent_app
+    
     def compose(self) -> ComposeResult:
         yield Label("[bold]Settings[/bold]")
         yield Static("─" * 40)
-        yield Label("Settings coming soon...")
+        yield Static("")
+        yield Button("View Logs", id="view-logs-btn", variant="primary")
+        yield Static("")
+        yield Label("Other settings coming soon...")
+    
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button clicks"""
+        if event.button.id == "view-logs-btn":
+            self.parent_app.push_screen(LogViewerScreen(self.parent_app.config_manager))
+
+
+class LogViewerScreen(ModalScreen):
+    """Modal screen for viewing logs"""
+    
+    CSS = """
+    LogViewerScreen {
+        align: center middle;
+    }
+    
+    #log-viewer-container {
+        width: 90;
+        height: 90%;
+        background: $panel;
+        border: thick $primary;
+        padding: 1 2;
+    }
+    
+    #log-content {
+        width: 100%;
+        height: 100%;
+        border: solid $primary;
+        padding: 1;
+    }
+    
+    #log-controls {
+        width: 100%;
+        height: auto;
+        margin-bottom: 1;
+    }
+    
+    #log-buttons {
+        width: 100%;
+        height: auto;
+        align: center middle;
+        margin-top: 1;
+    }
+    """
+    
+    def __init__(self, config_manager):
+        super().__init__()
+        self.config_manager = config_manager
+        self.log_level_filter = "all"
+        self.search_term = ""
+    
+    def compose(self) -> ComposeResult:
+        from textual.widgets import Input, Select
+        
+        yield Container(
+            Label("[bold cyan]Log Viewer[/bold cyan]"),
+            Horizontal(
+                Select(
+                    [("All Levels", "all"), ("Info", "info"), ("Warning", "warning"), ("Error", "error")],
+                    value="all",
+                    id="log-level-select"
+                ),
+                Input(placeholder="Search logs...", id="log-search-input"),
+                id="log-controls"
+            ),
+            ScrollableContainer(
+                Static("", id="log-content"),
+                id="log-scroll"
+            ),
+            Horizontal(
+                Button("Refresh", variant="primary", id="refresh-logs-btn"),
+                Button("Export", variant="default", id="export-logs-btn"),
+                Button("Close", variant="default", id="close-logs-btn"),
+                id="log-buttons"
+            ),
+            id="log-viewer-container"
+        )
+    
+    def on_mount(self) -> None:
+        """Load logs when modal opens"""
+        self.load_logs()
+    
+    def load_logs(self) -> None:
+        """Load and display logs"""
+        try:
+            log_file = self.config_manager.logs_dir / "gamesync.log"
+            
+            if not log_file.exists():
+                content = self.query_one("#log-content", Static)
+                content.update("[yellow]No log file found[/yellow]")
+                return
+            
+            # Read log file
+            with open(log_file, "r") as f:
+                lines = f.readlines()
+            
+            # Filter by level
+            filtered_lines = []
+            for line in lines:
+                if self.log_level_filter == "all":
+                    filtered_lines.append(line)
+                elif self.log_level_filter.upper() in line:
+                    filtered_lines.append(line)
+            
+            # Filter by search term
+            if self.search_term:
+                filtered_lines = [l for l in filtered_lines if self.search_term.lower() in l.lower()]
+            
+            # Display (last 1000 lines)
+            display_lines = filtered_lines[-1000:]
+            log_text = "".join(display_lines)
+            
+            content = self.query_one("#log-content", Static)
+            content.update(log_text if log_text else "[yellow]No matching logs[/yellow]")
+            
+        except Exception as e:
+            content = self.query_one("#log-content", Static)
+            content.update(f"[red]Error loading logs: {e}[/red]")
+    
+    def on_select_changed(self, event: Select.Changed) -> None:
+        """Handle log level filter change"""
+        self.log_level_filter = event.value
+        self.load_logs()
+    
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """Handle search input change"""
+        if event.input.id == "log-search-input":
+            self.search_term = event.value
+            self.load_logs()
+    
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button clicks"""
+        if event.button.id == "close-logs-btn":
+            self.dismiss()
+        elif event.button.id == "refresh-logs-btn":
+            self.load_logs()
+        elif event.button.id == "export-logs-btn":
+            self.export_logs()
+    
+    def export_logs(self) -> None:
+        """Export filtered logs to file"""
+        try:
+            from datetime import datetime
+            export_file = Path.home() / f"gamesync_logs_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            
+            content = self.query_one("#log-content", Static)
+            with open(export_file, "w") as f:
+                f.write(content.renderable)
+            
+            self.app.notify(f"Logs exported to {export_file}")
+        except Exception as e:
+            self.app.notify(f"Export failed: {e}", severity="error")
 
 
 class GameSyncTUI(App):
@@ -774,7 +932,7 @@ class GameSyncTUI(App):
             # Auto-focus on sync table
             self.set_timer(0.1, lambda: self.action_focus_content())
         elif screen_name == "settings":
-            content_area.mount(SettingsScreen())
+            content_area.mount(SettingsScreen(self))
         
         # Update button variants
         for button in self.query("Sidebar Button"):
