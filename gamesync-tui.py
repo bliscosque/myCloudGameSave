@@ -500,10 +500,8 @@ class GamesScreen(Vertical):
         yield Label("[bold]Games[/bold]")
         yield Static("─" * 40)
         yield Label("Press Enter to view details")
-        yield Horizontal(
-            Button("Add Game", id="add-game-btn", variant="success"),
-            Button("Detect Games", id="detect-games-btn", variant="primary"),
-        )
+        yield Button("Add Game", id="add-game-btn", variant="success")
+        yield Button("Detect Games", id="detect-games-btn", variant="primary")
         yield Static("")
         
         # Create data table
