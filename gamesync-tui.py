@@ -11,6 +11,7 @@ from pathlib import Path
 from src.config_manager import ConfigManager
 from src.logger import init_logger, get_logger
 from src.sync_engine import SyncEngine
+from src.game_detector import GameDetector
 
 
 class SyncPreviewScreen(ModalScreen):
@@ -499,7 +500,10 @@ class GamesScreen(Vertical):
         yield Label("[bold]Games[/bold]")
         yield Static("─" * 40)
         yield Label("Press Enter to view details")
-        yield Button("Add Game", id="add-game-btn", variant="success")
+        yield Horizontal(
+            Button("Add Game", id="add-game-btn", variant="success"),
+            Button("Detect Games", id="detect-games-btn", variant="primary"),
+        )
         yield Static("")
         
         # Create data table
@@ -561,6 +565,213 @@ class GamesScreen(Vertical):
         """Handle button clicks"""
         if event.button.id == "add-game-btn":
             self.parent_app.push_screen(AddGameDialog(self.config_manager, self.parent_app))
+        elif event.button.id == "detect-games-btn":
+            self.parent_app.push_screen(DetectGamesDialog(self.config_manager, self.parent_app))
+
+
+class DetectGamesDialog(ModalScreen):
+    """Modal dialog for detecting games from Steam"""
+    
+    CSS = """
+    DetectGamesDialog {
+        align: center middle;
+    }
+    
+    #detect-games-container {
+        width: 80;
+        height: 80%;
+        background: $panel;
+        border: thick $primary;
+        padding: 1 2;
+    }
+    
+    #detect-progress {
+        width: 100%;
+        height: auto;
+        margin-bottom: 1;
+    }
+    
+    #detected-games-table {
+        width: 100%;
+        height: 100%;
+    }
+    
+    #detect-buttons {
+        width: 100%;
+        height: auto;
+        align: center middle;
+        margin-top: 1;
+    }
+    """
+    
+    def __init__(self, config_manager, parent_app):
+        super().__init__()
+        self.config_manager = config_manager
+        self.parent_app = parent_app
+        self.detected_games = []
+        self.selected_games = set()
+    
+    def compose(self) -> ComposeResult:
+        from textual.widgets import Checkbox
+        
+        yield Container(
+            Label("[bold cyan]Detect Games from Steam[/bold cyan]"),
+            Static("Detecting games...", id="detect-progress"),
+            ScrollableContainer(
+                DataTable(id="detected-games-table", cursor_type="row"),
+                id="detect-scroll"
+            ),
+            Horizontal(
+                Button("Add Selected", variant="success", id="add-selected-btn", disabled=True),
+                Button("Select All", variant="default", id="select-all-btn"),
+                Button("Cancel", variant="default", id="cancel-detect-btn"),
+                id="detect-buttons"
+            ),
+            id="detect-games-container"
+        )
+    
+    def on_mount(self) -> None:
+        """Start detection when modal opens"""
+        self.detect_games()
+    
+    def detect_games(self) -> None:
+        """Run game detection"""
+        try:
+            progress = self.query_one("#detect-progress", Static)
+            progress.update("Detecting games from Steam...")
+            
+            # Run detection
+            detector = GameDetector(config_manager=self.config_manager)
+            detected = detector.detect_non_steam_games()
+            
+            # Filter out already configured games
+            existing_games = self.config_manager.list_games()
+            new_games = []
+            
+            for game_info in detected:
+                game_id = detector.create_game_id(game_info)
+                if game_id not in existing_games:
+                    new_games.append(game_info)
+            
+            self.detected_games = new_games
+            
+            # Populate table
+            table = self.query_one("#detected-games-table", DataTable)
+            table.add_columns("☐", "Game Name", "Executable", "Save Locations")
+            
+            if new_games:
+                for idx, game_info in enumerate(new_games):
+                    name = game_info.get("name", "Unknown")
+                    exe = game_info.get("exe", "").split("/")[-1].split("\\")[-1]
+                    
+                    # Detect save locations
+                    save_locs = detector.detect_save_locations(game_info)
+                    save_count = f"{len(save_locs)} found" if save_locs else "None"
+                    
+                    table.add_row("☐", name, exe, save_count, key=f"game_{idx}")
+                
+                progress.update(f"Found {len(new_games)} new game(s)")
+                
+                # Enable buttons
+                add_btn = self.query_one("#add-selected-btn", Button)
+                add_btn.disabled = False
+            else:
+                table.add_row("", "No new games detected", "", "")
+                progress.update("No new games found (all games already configured)")
+            
+        except Exception as e:
+            progress = self.query_one("#detect-progress", Static)
+            progress.update(f"[red]Error detecting games: {e}[/red]")
+    
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        """Toggle game selection"""
+        try:
+            row_key = event.row_key.value if hasattr(event.row_key, 'value') else str(event.row_key)
+            
+            # Toggle selection
+            if row_key in self.selected_games:
+                self.selected_games.remove(row_key)
+                checkbox = "☐"
+            else:
+                self.selected_games.add(row_key)
+                checkbox = "☑"
+            
+            # Update checkbox in table
+            table = event.data_table
+            columns = list(table.columns.keys())
+            table.update_cell(row_key, columns[0], checkbox)
+            
+        except Exception as e:
+            pass
+    
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button clicks"""
+        if event.button.id == "cancel-detect-btn":
+            self.dismiss()
+        elif event.button.id == "select-all-btn":
+            self.toggle_select_all()
+        elif event.button.id == "add-selected-btn":
+            self.add_selected_games()
+    
+    def toggle_select_all(self) -> None:
+        """Select or deselect all games"""
+        table = self.query_one("#detected-games-table", DataTable)
+        columns = list(table.columns.keys())
+        
+        # Check if all are selected
+        all_selected = len(self.selected_games) == len(self.detected_games)
+        
+        if all_selected:
+            # Deselect all
+            self.selected_games.clear()
+            checkbox = "☐"
+            btn_label = "Select All"
+        else:
+            # Select all
+            self.selected_games = {f"game_{i}" for i in range(len(self.detected_games))}
+            checkbox = "☑"
+            btn_label = "Deselect All"
+        
+        # Update all checkboxes
+        for i in range(len(self.detected_games)):
+            row_key = f"game_{i}"
+            table.update_cell(row_key, columns[0], checkbox)
+        
+        # Update button label
+        btn = self.query_one("#select-all-btn", Button)
+        btn.label = btn_label
+    
+    def add_selected_games(self) -> None:
+        """Add selected games to configuration"""
+        if not self.selected_games:
+            self.app.notify("No games selected", severity="warning")
+            return
+        
+        try:
+            detector = GameDetector(config_manager=self.config_manager)
+            added_count = 0
+            
+            for row_key in self.selected_games:
+                idx = int(row_key.split("_")[1])
+                game_info = self.detected_games[idx]
+                
+                # Detect save locations
+                save_locs = detector.detect_save_locations(game_info)
+                
+                if save_locs:
+                    # Save game config
+                    detector.save_game_config(game_info, save_locs, overwrite=False)
+                    added_count += 1
+            
+            # Show success
+            self.app.notify(f"Added {added_count} game(s) successfully!")
+            self.dismiss()
+            
+            # Refresh games list
+            self.parent_app.switch_screen("games")
+            
+        except Exception as e:
+            self.app.notify(f"Error adding games: {e}", severity="error")
 
 
 class AddGameDialog(ModalScreen):

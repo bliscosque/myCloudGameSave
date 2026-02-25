@@ -280,7 +280,7 @@
   - Path browser/selector
   - Validation and error display
 
-- [ ] **Task 9.4**: Implement game detection UI
+- [x] **Task 9.4**: Implement game detection UI
   - Show detection progress
   - Display detected games with checkboxes
   - Bulk add selected games
@@ -387,10 +387,10 @@
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (3/3 tasks) ✓
-- Milestone 9: Game Management UI (3/3 tasks) - Task 9.4 skipped
+- Milestone 9: Game Management UI (4/4 tasks) ✓
 - Milestone 10: Sync Operations UI (4/4 tasks) ✓
 
-**Total Phase 2 Progress: 10/18 tasks completed (56%)**
+**Total Phase 2 Progress: 11/18 tasks completed (61%)**
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (0/3 tasks)
