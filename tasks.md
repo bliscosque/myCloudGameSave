@@ -275,7 +275,7 @@
   - Show sync statistics
   - (Edit functionality deferred to Task 11.2)
 
-- [ ] **Task 9.3**: Implement add game dialog
+- [x] **Task 9.3**: Implement add game dialog
   - Interactive form for manual game addition
   - Path browser/selector
   - Validation and error display
@@ -387,10 +387,10 @@
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (3/3 tasks) ✓
-- Milestone 9: Game Management UI (2/3 tasks) - Tasks 9.3, 9.4 skipped
+- Milestone 9: Game Management UI (3/3 tasks) - Task 9.4 skipped
 - Milestone 10: Sync Operations UI (4/4 tasks) ✓
 
-**Total Phase 2 Progress: 9/18 tasks completed (50%)**
+**Total Phase 2 Progress: 10/18 tasks completed (56%)**
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (0/3 tasks)

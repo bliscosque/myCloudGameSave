@@ -498,7 +498,11 @@ class GamesScreen(Vertical):
     def compose(self) -> ComposeResult:
         yield Label("[bold]Games[/bold]")
         yield Static("─" * 40)
-        yield Label("Press Enter to view game details")
+        yield Horizontal(
+            Label("Press Enter to view details"),
+            Button("Add Game", id="add-game-btn", variant="success"),
+        )
+        yield Static("")
         
         # Create data table
         table = DataTable(cursor_type="row")
@@ -554,6 +558,161 @@ class GamesScreen(Vertical):
         except Exception as e:
             # Silently ignore errors (e.g., clicking on "No games" row)
             pass
+    
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button clicks"""
+        if event.button.id == "add-game-btn":
+            self.parent_app.push_screen(AddGameDialog(self.config_manager, self.parent_app))
+
+
+class AddGameDialog(ModalScreen):
+    """Modal dialog for adding a game manually"""
+    
+    CSS = """
+    AddGameDialog {
+        align: center middle;
+    }
+    
+    #add-game-container {
+        width: 70;
+        height: auto;
+        background: $panel;
+        border: thick $primary;
+        padding: 1 2;
+    }
+    
+    .form-row {
+        height: auto;
+        margin-bottom: 1;
+    }
+    
+    #add-game-buttons {
+        width: 100%;
+        height: auto;
+        align: center middle;
+        margin-top: 1;
+    }
+    """
+    
+    def __init__(self, config_manager, parent_app):
+        super().__init__()
+        self.config_manager = config_manager
+        self.parent_app = parent_app
+    
+    def compose(self) -> ComposeResult:
+        yield Container(
+            Label("[bold cyan]Add Game Manually[/bold cyan]"),
+            Static("─" * 60),
+            Vertical(
+                Label("Game ID (lowercase, no spaces):"),
+                Input(placeholder="e.g., mygame", id="game-id-input"),
+                classes="form-row"
+            ),
+            Vertical(
+                Label("Game Name:"),
+                Input(placeholder="e.g., My Game", id="game-name-input"),
+                classes="form-row"
+            ),
+            Vertical(
+                Label("Local Save Path:"),
+                Input(placeholder="/path/to/local/saves", id="local-path-input"),
+                classes="form-row"
+            ),
+            Vertical(
+                Label("Cloud Directory Name:"),
+                Input(placeholder="e.g., mygame", id="cloud-dir-input"),
+                classes="form-row"
+            ),
+            Static("", id="error-message"),
+            Horizontal(
+                Button("Add Game", variant="success", id="submit-btn"),
+                Button("Cancel", variant="default", id="cancel-btn"),
+                id="add-game-buttons"
+            ),
+            id="add-game-container"
+        )
+    
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button clicks"""
+        if event.button.id == "cancel-btn":
+            self.dismiss()
+        elif event.button.id == "submit-btn":
+            self.add_game()
+    
+    def add_game(self) -> None:
+        """Validate and add the game"""
+        try:
+            # Get input values
+            game_id = self.query_one("#game-id-input", Input).value.strip().lower()
+            game_name = self.query_one("#game-name-input", Input).value.strip()
+            local_path = self.query_one("#local-path-input", Input).value.strip()
+            cloud_dir = self.query_one("#cloud-dir-input", Input).value.strip()
+            
+            # Validate
+            error_msg = self.query_one("#error-message", Static)
+            
+            if not game_id:
+                error_msg.update("[red]Game ID is required[/red]")
+                return
+            
+            if not game_id.replace("_", "").replace("-", "").isalnum():
+                error_msg.update("[red]Game ID must be alphanumeric (with _ or -)[/red]")
+                return
+            
+            if not game_name:
+                error_msg.update("[red]Game Name is required[/red]")
+                return
+            
+            if not local_path:
+                error_msg.update("[red]Local Save Path is required[/red]")
+                return
+            
+            if not cloud_dir:
+                error_msg.update("[red]Cloud Directory Name is required[/red]")
+                return
+            
+            # Check if game already exists
+            existing_games = self.config_manager.list_games()
+            if game_id in existing_games:
+                error_msg.update("[red]Game ID already exists[/red]")
+                return
+            
+            # Create game config
+            game_config = {
+                "game": {
+                    "id": game_id,
+                    "name": game_name,
+                    "platform": "manual",
+                    "backup_dir_name": cloud_dir
+                },
+                "paths": {
+                    "local": local_path,
+                    "cloud": cloud_dir
+                },
+                "sync": {
+                    "enabled": True,
+                    "exclude_patterns": ["*.tmp", "*.log"],
+                    "last_sync": None
+                },
+                "metadata": {
+                    "auto_detected": False,
+                    "last_modified": None
+                }
+            }
+            
+            # Save game config
+            self.config_manager.save_game_config(game_id, game_config)
+            
+            # Show success and close
+            self.app.notify(f"Game '{game_name}' added successfully!")
+            self.dismiss()
+            
+            # Refresh games list
+            self.parent_app.switch_screen("games")
+            
+        except Exception as e:
+            error_msg = self.query_one("#error-message", Static)
+            error_msg.update(f"[red]Error: {e}[/red]")
 
 
 class SyncScreen(Vertical):
