@@ -126,6 +126,9 @@ class SyncPreviewScreen(ModalScreen):
             
             actions = result.get("actions", [])
             if actions:
+                # Sort actions by filename
+                actions.sort(key=lambda x: x.get("filename", "").lower())
+                
                 for idx, action in enumerate(actions):
                     filename = action.get("filename", "")
                     action_type = action.get("action", "")
@@ -210,14 +213,15 @@ class SyncPreviewScreen(ModalScreen):
             new_action = self.cycle_action(current_action)
             self.sync_actions[row_key] = new_action
             
-            # Update table row
+            # Update table row in place
             table = event.data_table
-            row_data = list(table.get_row(event.row_key))
-            row_data[1] = new_action  # Update action column
-            row_data[3] = self.get_direction_symbol(new_action)  # Update direction column
+            coordinate = table.coordinate_to_cell_key(event.cursor_coordinate)
             
-            table.remove_row(event.row_key)
-            table.add_row(*row_data, key=row_key)
+            # Update action column (column 1)
+            table.update_cell(row_key, "Action", new_action)
+            
+            # Update direction column (column 3)
+            table.update_cell(row_key, "Direction", self.get_direction_symbol(new_action))
             
         except Exception as e:
             pass
