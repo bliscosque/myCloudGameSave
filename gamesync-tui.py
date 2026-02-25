@@ -3,7 +3,7 @@
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical, ScrollableContainer
-from textual.widgets import Header, Footer, Static, Label, Button, DataTable, ProgressBar, Input, Select
+from textual.widgets import Header, Footer, Static, Label, Button, DataTable, ProgressBar, Input, Select, Checkbox
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from pathlib import Path
@@ -397,6 +397,145 @@ class Dashboard(Vertical):
         yield Label(f"Last Sync: {last_sync}")
 
 
+class EditGameDialog(ModalScreen):
+    """Modal dialog for editing game configuration"""
+    
+    CSS = """
+    EditGameDialog {
+        align: center middle;
+    }
+    
+    #edit-game-container {
+        width: 80;
+        height: auto;
+        max-height: 90%;
+        background: $panel;
+        border: thick $primary;
+        padding: 1 2;
+    }
+    
+    .edit-form-row {
+        height: auto;
+        margin-bottom: 1;
+    }
+    
+    #edit-game-buttons {
+        width: 100%;
+        height: auto;
+        align: center middle;
+        margin-top: 1;
+    }
+    """
+    
+    def __init__(self, game_id: str, game_config: dict, config_manager):
+        super().__init__()
+        self.game_id = game_id
+        self.game_config = game_config
+        self.config_manager = config_manager
+    
+    def compose(self) -> ComposeResult:
+        from textual.widgets import Checkbox
+        
+        game = self.game_config.get("game", {})
+        paths = self.game_config.get("paths", {})
+        sync = self.game_config.get("sync", {})
+        
+        yield Container(
+            Label(f"[bold cyan]Edit Game: {game.get('name', self.game_id)}[/bold cyan]"),
+            Static("─" * 70),
+            ScrollableContainer(
+                Vertical(
+                    Label("[bold]Game Name:[/bold]"),
+                    Input(value=game.get("name", ""), id="edit-name-input"),
+                    classes="edit-form-row"
+                ),
+                Vertical(
+                    Label("[bold]Local Save Path:[/bold]"),
+                    Input(value=paths.get("local", ""), id="edit-local-input"),
+                    classes="edit-form-row"
+                ),
+                Vertical(
+                    Label("[bold]Cloud Directory:[/bold]"),
+                    Input(value=paths.get("cloud", ""), id="edit-cloud-input"),
+                    classes="edit-form-row"
+                ),
+                Vertical(
+                    Label("[bold]Exclude Patterns (comma-separated):[/bold]"),
+                    Input(value=", ".join(sync.get("exclude_patterns", [])), id="edit-exclude-input"),
+                    classes="edit-form-row"
+                ),
+                Vertical(
+                    Checkbox("Sync Enabled", sync.get("enabled", True), id="edit-enabled-checkbox"),
+                    classes="edit-form-row"
+                ),
+            ),
+            Static("", id="edit-error-message"),
+            Horizontal(
+                Button("Save Changes", variant="success", id="save-edit-btn"),
+                Button("Cancel", variant="default", id="cancel-edit-btn"),
+                id="edit-game-buttons"
+            ),
+            id="edit-game-container"
+        )
+    
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button clicks"""
+        if event.button.id == "cancel-edit-btn":
+            self.dismiss()
+        elif event.button.id == "save-edit-btn":
+            self.save_changes()
+    
+    def save_changes(self) -> None:
+        """Save edited game configuration"""
+        try:
+            # Get values
+            name = self.query_one("#edit-name-input", Input).value.strip()
+            local_path = self.query_one("#edit-local-input", Input).value.strip()
+            cloud_dir = self.query_one("#edit-cloud-input", Input).value.strip()
+            exclude_str = self.query_one("#edit-exclude-input", Input).value.strip()
+            enabled = self.query_one("#edit-enabled-checkbox", Checkbox).value
+            
+            # Validate
+            error_msg = self.query_one("#edit-error-message", Static)
+            
+            if not name:
+                error_msg.update("[red]Game name is required[/red]")
+                return
+            
+            if not local_path:
+                error_msg.update("[red]Local path is required[/red]")
+                return
+            
+            if not cloud_dir:
+                error_msg.update("[red]Cloud directory is required[/red]")
+                return
+            
+            # Parse exclude patterns
+            exclude_patterns = [p.strip() for p in exclude_str.split(",") if p.strip()]
+            
+            # Update config
+            self.game_config["game"]["name"] = name
+            self.game_config["paths"]["local"] = local_path
+            self.game_config["paths"]["cloud"] = cloud_dir
+            self.game_config["sync"]["exclude_patterns"] = exclude_patterns
+            self.game_config["sync"]["enabled"] = enabled
+            
+            # Update last_modified
+            from datetime import datetime
+            self.game_config["metadata"]["last_modified"] = datetime.now().isoformat()
+            
+            # Save to file
+            self.config_manager.save_game_config(self.game_id, self.game_config)
+            
+            # Show success and close
+            self.app.notify(f"Game '{name}' updated successfully!")
+            self.dismiss()
+            
+        except Exception as e:
+            error_msg = self.query_one("#edit-error-message", Static)
+            error_msg.update(f"[red]Error: {e}[/red]")
+
+
 class GameDetailsScreen(ModalScreen):
     """Modal screen showing game details"""
     
@@ -477,6 +616,7 @@ class GameDetailsScreen(ModalScreen):
                 Static(details, id="details-content"),
             ),
             Horizontal(
+                Button("Edit", variant="success", id="edit-btn"),
                 Button("Close", variant="primary", id="close-btn"),
                 id="details-buttons"
             ),
@@ -484,8 +624,13 @@ class GameDetailsScreen(ModalScreen):
         )
     
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Close the modal"""
-        self.dismiss()
+        """Handle button clicks"""
+        if event.button.id == "close-btn":
+            self.dismiss()
+        elif event.button.id == "edit-btn":
+            # Close details and open editor
+            self.dismiss()
+            self.app.push_screen(EditGameDialog(self.game_id, self.game_config, self.app.config_manager))
 
 
 class GamesScreen(Vertical):

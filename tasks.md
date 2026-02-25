@@ -323,7 +323,7 @@
   - Logging preferences
   - Theme selection
 
-- [ ] **Task 11.2**: Implement game configuration editor
+- [x] **Task 11.2**: Implement game configuration editor
   - Edit local/cloud paths
   - Manage exclude patterns
   - Enable/disable sync
@@ -389,9 +389,9 @@
 - Milestone 8: TUI Foundation (3/3 tasks) ✓
 - Milestone 9: Game Management UI (4/4 tasks) ✓
 - Milestone 10: Sync Operations UI (4/4 tasks) ✓
-- Milestone 11: Configuration UI (1/2 tasks)
+- Milestone 11: Configuration UI (2/2 tasks) ✓
 
-**Total Phase 2 Progress: 12/18 tasks completed (67%)**
+**Total Phase 2 Progress: 13/18 tasks completed (72%)**
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (0/3 tasks)
