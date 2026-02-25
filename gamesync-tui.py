@@ -343,6 +343,8 @@ class Sidebar(Vertical):
         yield Button("Games", id="nav-games")
         yield Button("Sync", id="nav-sync")
         yield Button("Settings", id="nav-settings")
+        yield Static("")
+        yield Button("Quit", id="nav-quit", variant="error")
 
 
 class Dashboard(Vertical):
@@ -749,6 +751,8 @@ class GameSyncTUI(App):
             self.switch_screen("sync")
         elif button_id == "nav-settings":
             self.switch_screen("settings")
+        elif button_id == "nav-quit":
+            self.exit()
     
     def switch_screen(self, screen_name: str) -> None:
         """Switch to a different screen"""
@@ -763,8 +767,12 @@ class GameSyncTUI(App):
             content_area.mount(Dashboard(self.config_manager))
         elif screen_name == "games":
             content_area.mount(GamesScreen(self.config_manager, self))
+            # Auto-focus on games table
+            self.set_timer(0.1, lambda: self.action_focus_content())
         elif screen_name == "sync":
             content_area.mount(SyncScreen(self.config_manager, self))
+            # Auto-focus on sync table
+            self.set_timer(0.1, lambda: self.action_focus_content())
         elif screen_name == "settings":
             content_area.mount(SettingsScreen())
         
