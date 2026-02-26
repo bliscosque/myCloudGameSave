@@ -665,6 +665,16 @@ def cmd_sync_to_cloud(args):
     print(f"\n{'='*60}")
     print(f"Summary: {result['total_copied']} copied, {result['total_skipped']} skipped, {result['total_errors']} errors")
     print(f"{'='*60}")
+    
+    # Exit with error if files were skipped due to safety (newer files on other side)
+    if result['total_skipped'] > 0:
+        for item in result['skipped']:
+            if item['reason'] == 'cloud is newer':
+                sys.exit(2)  # Exit code 2 = safety check prevented sync
+    
+    # Exit with error if there were actual errors
+    if result['total_errors'] > 0:
+        sys.exit(1)
 
 
 def cmd_sync_from_cloud(args):
@@ -737,6 +747,17 @@ def cmd_sync_from_cloud(args):
     print(f"\n{'='*60}")
     print(f"Summary: {result['total_copied']} copied, {result['total_skipped']} skipped, {result['total_errors']} errors")
     print(f"{'='*60}")
+    
+    # Exit with error if files were skipped due to safety (newer files on other side)
+    if result['total_skipped'] > 0:
+        for item in result['skipped']:
+            if item['reason'] == 'local is newer':
+                sys.exit(2)  # Exit code 2 = safety check prevented sync
+    
+    # Exit with error if there were actual errors
+    if result['total_errors'] > 0:
+        sys.exit(1)
+
 
 
 def cmd_status(args):

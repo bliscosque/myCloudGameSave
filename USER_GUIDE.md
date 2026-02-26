@@ -359,6 +359,13 @@ Summary: 2 copied, 1 skipped, 0 errors
 ============================================================
 ```
 
+**Exit Codes:**
+- `0` - Success (files copied or skipped because equal)
+- `1` - Error (configuration missing, permissions, etc.)
+- `2` - Safety check prevented sync (cloud has newer files)
+
+**Note:** Exit code 2 means you need to use `--force` if you really want to overwrite newer cloud files.
+
 ---
 
 ### `sync-from-cloud` - One-Way Sync from Cloud
@@ -418,6 +425,13 @@ Local:  /home/user/.local/share/Steam/steamapps/compatdata/.../SaveGames
 Summary: 1 copied, 2 skipped, 0 errors
 ============================================================
 ```
+
+**Exit Codes:**
+- `0` - Success (files copied or skipped because equal)
+- `1` - Error (configuration missing, permissions, etc.)
+- `2` - Safety check prevented sync (local has newer files)
+
+**Note:** Exit code 2 means you need to use `--force` if you really want to overwrite newer local files.
 
 ---
 
@@ -535,17 +549,70 @@ This pushes your saves to cloud. Only copies if local is newer.
 - Fast (only copies what changed)
 - Clear intent (to-cloud vs from-cloud)
 
-**Integration with Steam:**
+**Integration with Steam (Wrapper Script):**
 
-You can add these commands to Steam launch options:
+For automatic pre/post-game sync with error handling, use a wrapper script:
 
-1. Right-click game in Steam → Properties → Launch Options
-2. Add before game executable:
+1. Create `steam_wrapper.sh`:
+   ```bash
+   #!/bin/bash
+   
+   GAMESYNC_PATH="$HOME/vscode/venv/bin/python $HOME/vscode/myCloudGameSave/gamesync.py"
+   GAME_ID="your-game-id"  # CHANGE THIS
+   
+   echo "=== PRE GAME ==="
+   $GAMESYNC_PATH sync-from-cloud "$GAME_ID"
+   EXIT_CODE=$?
+   
+   if [ $EXIT_CODE -eq 2 ]; then
+       zenity --error \
+           --title="Sync Conflict" \
+           --text="Cannot sync from cloud!\n\nYou have newer local saves.\nGame launch aborted." \
+           --width=400
+       exit 1
+   elif [ $EXIT_CODE -ne 0 ]; then
+       zenity --question \
+           --title="Sync Error" \
+           --text="Sync failed. Continue anyway?" \
+           --width=300 || exit 1
+   fi
+   
+   echo "=== RUN GAME ==="
+   gamemoderun "$@"
+   GAME_EXIT_CODE=$?
+   
+   echo "=== POST GAME ==="
+   $GAMESYNC_PATH sync-to-cloud "$GAME_ID"
+   EXIT_CODE=$?
+   
+   if [ $EXIT_CODE -eq 2 ]; then
+       zenity --error \
+           --title="Sync Conflict" \
+           --text="Cloud has newer saves!\nLocal changes NOT uploaded." \
+           --width=400
+   elif [ $EXIT_CODE -ne 0 ]; then
+       zenity --warning \
+           --title="Sync Error" \
+           --text="Failed to sync. Please sync manually." \
+           --width=300
+   fi
+   
+   exit $GAME_EXIT_CODE
    ```
-   ~/vscode/venv/bin/python ~/path/to/gamesync.py sync-from-cloud <game-id> && %command%
+
+2. Make executable: `chmod +x steam_wrapper.sh`
+
+3. In Steam → Game Properties → Launch Options:
+   ```
+   /path/to/steam_wrapper.sh %command%
    ```
 
-Note: Post-game sync must be run manually after closing the game.
+**Exit Code Handling:**
+- Exit code `2` = Safety check failed (newer files on other side) → Aborts pre-game, warns post-game
+- Exit code `1` = Configuration error → Prompts user
+- Exit code `0` = Success → Continues normally
+
+**Requirements:** Install zenity for GUI dialogs: `sudo dnf install zenity`
 
 ---
 

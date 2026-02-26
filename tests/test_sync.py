@@ -702,6 +702,84 @@ def test_sync_directional_dry_run():
         return True
 
 
+def test_sync_to_cloud_exit_behavior():
+    """Test sync_to_cloud return values for exit code logic"""
+    print("\nTest 23: sync_to_cloud return values...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        engine = SyncEngine()
+        
+        # Test 1: Success (newer local)
+        local_file = local_dir / "save1.dat"
+        local_file.write_text("new")
+        cloud_file = cloud_dir / "save1.dat"
+        cloud_file.write_text("old")
+        old_time = time.time() - 100
+        os.utime(cloud_file, (old_time, old_time))
+        
+        result = engine.sync_to_cloud(local_dir, cloud_dir)
+        assert result['total_copied'] == 1
+        assert result['total_errors'] == 0
+        
+        # Test 2: Skip due to cloud newer (should be detectable)
+        local_file2 = local_dir / "save2.dat"
+        local_file2.write_text("old")
+        os.utime(local_file2, (old_time, old_time))
+        cloud_file2 = cloud_dir / "save2.dat"
+        cloud_file2.write_text("new")
+        
+        result = engine.sync_to_cloud(local_dir, cloud_dir)
+        assert result['total_skipped'] > 0
+        assert any(item['reason'] == 'cloud is newer' for item in result['skipped'])
+        
+        print("  ✓ Returns correct skip reasons for exit code logic")
+        return True
+
+
+def test_sync_from_cloud_exit_behavior():
+    """Test sync_from_cloud return values for exit code logic"""
+    print("\nTest 24: sync_from_cloud return values...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        engine = SyncEngine()
+        
+        # Test 1: Success (newer cloud)
+        cloud_file = cloud_dir / "save1.dat"
+        cloud_file.write_text("new")
+        local_file = local_dir / "save1.dat"
+        local_file.write_text("old")
+        old_time = time.time() - 100
+        os.utime(local_file, (old_time, old_time))
+        
+        result = engine.sync_from_cloud(local_dir, cloud_dir)
+        assert result['total_copied'] == 1
+        assert result['total_errors'] == 0
+        
+        # Test 2: Skip due to local newer (should be detectable)
+        cloud_file2 = cloud_dir / "save2.dat"
+        cloud_file2.write_text("old")
+        os.utime(cloud_file2, (old_time, old_time))
+        local_file2 = local_dir / "save2.dat"
+        local_file2.write_text("new")
+        
+        result = engine.sync_from_cloud(local_dir, cloud_dir)
+        assert result['total_skipped'] > 0
+        assert any(item['reason'] == 'local is newer' for item in result['skipped'])
+        
+        print("  ✓ Returns correct skip reasons for exit code logic")
+        return True
+
+
 def main():
     print("=== Sync Engine Tests ===\n")
     
@@ -728,7 +806,9 @@ def main():
         test_sync_from_cloud_newer_local,
         test_sync_from_cloud_equal_files,
         test_sync_from_cloud_force,
-        test_sync_directional_dry_run
+        test_sync_directional_dry_run,
+        test_sync_to_cloud_exit_behavior,
+        test_sync_from_cloud_exit_behavior,
     ]
     
     results = []
