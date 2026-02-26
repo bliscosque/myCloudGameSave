@@ -240,6 +240,69 @@
 
 ---
 
+## Phase 1.1: Directional Sync Commands
+
+**Objective**: Add simplified directional sync commands for pre-game and post-game workflows. These commands sync files in one direction only, never replacing newer files unless forced.
+
+**Use Case**: 
+- Before playing: `gamesync.py sync-from-cloud <game-id>` - Get latest saves from cloud
+- After playing: `gamesync.py sync-to-cloud <game-id>` - Push latest saves to cloud
+
+### Milestone 1.1: Directional Sync Implementation
+
+- [ ] **Task 1.1.1**: Implement directional sync logic
+  - Create `sync_to_cloud()` function in sync_engine.py
+  - Create `sync_from_cloud()` function in sync_engine.py
+  - Compare file timestamps (mtime)
+  - Only copy if source is newer than destination
+  - Skip if files are equal (same timestamp and same checksum)
+  - Never replace newer files (safety check)
+  - Support --force flag to override safety check
+  - Return sync summary (copied, skipped, errors)
+
+- [ ] **Task 1.1.2**: Implement `sync-to-cloud` CLI command
+  - Add `sync-to-cloud <game-id>` subcommand
+  - Support --all flag for all games
+  - Support --force flag to override safety
+  - Support --dry-run to preview
+  - Display files being copied
+  - Display files being skipped (with reason)
+  - Show summary at end
+  - Handle errors gracefully
+
+- [ ] **Task 1.1.3**: Implement `sync-from-cloud` CLI command
+  - Add `sync-from-cloud <game-id>` subcommand
+  - Support --all flag for all games
+  - Support --force flag to override safety
+  - Support --dry-run to preview
+  - Display files being copied
+  - Display files being skipped (with reason)
+  - Show summary at end
+  - Handle errors gracefully
+
+- [ ] **Task 1.1.4**: Add tests for directional sync
+  - Test sync-to-cloud with newer local files
+  - Test sync-to-cloud with newer cloud files (should skip)
+  - Test sync-to-cloud with equal files (should skip)
+  - Test sync-from-cloud with newer cloud files
+  - Test sync-from-cloud with newer local files (should skip)
+  - Test sync-from-cloud with equal files (should skip)
+  - Test --force flag behavior
+  - Test --dry-run behavior
+  - Test error handling
+
+- [ ] **Task 1.1.5**: Update documentation
+  - Add sync-to-cloud command to USER_GUIDE.md
+  - Add sync-from-cloud command to USER_GUIDE.md
+  - Document pre-game/post-game workflow
+  - Add examples with Steam launch options
+  - Update command reference
+  - Add safety notes about --force flag
+
+**Phase 1.1 Progress: 0/5 tasks completed (0%)**
+
+---
+
 ## Phase 2: TUI Implementation (Textual)
 
 ### Milestone 8: TUI Foundation
@@ -385,22 +448,20 @@
 
 **Total Phase 1 Progress: 31/36 tasks completed (86%)**
 
+**Phase 1.1 - Directional Sync Commands**
+- Milestone 1.1: Directional Sync Implementation (0/5 tasks)
+
+**Total Phase 1.1 Progress: 0/5 tasks completed (0%)**
+
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (3/3 tasks) ✓
 - Milestone 9: Game Management UI (4/4 tasks) ✓
 - Milestone 10: Sync Operations UI (4/4 tasks) ✓
 - Milestone 11: Configuration UI (2/2 tasks) ✓
+- Milestone 12: Advanced Features (0/4 tasks)
+- Milestone 13: Polish & Testing (0/3 tasks)
 
 **Total Phase 2 Progress: 13/18 tasks completed (72%)**
-
-**Phase 2 - TUI Implementation**
-- Milestone 8: TUI Foundation (0/3 tasks)
-- Milestone 9: Game Management UI (0/4 tasks)
-- Milestone 10: Sync Operations UI (0/4 tasks)
-- Milestone 11: Configuration UI (0/2 tasks)
-- Milestone 12: Polish & Integration (0/5 tasks)
-
-**Total Phase 2 Progress: 0/18 tasks completed (0%)**
 
 **Phase 3 - GUI Implementation (Qt)**
 - To be detailed when Phase 2 is complete
