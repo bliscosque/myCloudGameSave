@@ -81,6 +81,16 @@ def create_parser():
         help='Sync all configured games'
     )
     
+    # sync-to-cloud command
+    sync_to_cloud_parser = subparsers.add_parser(
+        'sync-to-cloud',
+        help='Sync game saves from local to cloud (one-way)'
+    )
+    sync_to_cloud_parser.add_argument(
+        'game_id',
+        help='Game ID to sync'
+    )
+    
     # status command
     status_parser = subparsers.add_parser(
         'status',
@@ -575,6 +585,78 @@ def cmd_sync(args):
         print("\n⚠ Conflicts detected. Run 'gamesync status' to review.")
 
 
+def cmd_sync_to_cloud(args):
+    """Sync game saves from local to cloud (one-way)"""
+    from src.sync_engine import SyncEngine
+    
+    config_mgr = ConfigManager()
+    if not config_mgr.config_exists():
+        print("✗ Configuration not initialized. Run 'gamesync init' first.")
+        sys.exit(1)
+    
+    # Load global config
+    global_config = config_mgr.load_config()
+    cloud_directory = global_config.get('general', {}).get('cloud_directory')
+    
+    if not cloud_directory:
+        print("✗ Cloud directory not configured.")
+        sys.exit(1)
+    
+    cloud_dir = Path(cloud_directory)
+    
+    # Load game config
+    game_config = config_mgr.load_game_config(args.game_id)
+    if not game_config:
+        print(f"✗ Game '{args.game_id}' not found")
+        sys.exit(1)
+    
+    game_name = game_config.get('game', {}).get('name', args.game_id)
+    local_path = Path(game_config.get('paths', {}).get('local', ''))
+    cloud_subdir = game_config.get('paths', {}).get('cloud', args.game_id)
+    game_cloud_dir = cloud_dir / cloud_subdir
+    
+    print(f"\n{'='*60}")
+    print(f"Syncing to cloud: {game_name}")
+    print(f"{'='*60}")
+    print(f"Local:  {local_path}")
+    print(f"Cloud:  {game_cloud_dir}")
+    
+    if args.dry_run:
+        print("\n[DRY RUN MODE - No files will be copied]")
+    
+    sync_engine = SyncEngine()
+    
+    # Perform sync
+    result = sync_engine.sync_to_cloud(
+        local_path,
+        game_cloud_dir,
+        force=args.force,
+        dry_run=args.dry_run
+    )
+    
+    # Display results
+    print(f"\n{'─'*60}")
+    
+    if result['total_copied'] > 0:
+        print(f"\n✓ Copied to cloud ({result['total_copied']} files):")
+        for filename in result['copied']:
+            print(f"  → {filename}")
+    
+    if result['total_skipped'] > 0:
+        print(f"\n⊘ Skipped ({result['total_skipped']} files):")
+        for item in result['skipped']:
+            print(f"  - {item['file']}: {item['reason']}")
+    
+    if result['total_errors'] > 0:
+        print(f"\n✗ Errors ({result['total_errors']}):")
+        for error in result['errors']:
+            print(f"  ! {error}")
+    
+    print(f"\n{'='*60}")
+    print(f"Summary: {result['total_copied']} copied, {result['total_skipped']} skipped, {result['total_errors']} errors")
+    print(f"{'='*60}")
+
+
 def cmd_status(args):
     """Show sync status for games"""
     from src.sync_engine import SyncEngine
@@ -746,6 +828,8 @@ def main():
         cmd_add(args)
     elif args.command == 'sync':
         cmd_sync(args)
+    elif args.command == 'sync-to-cloud':
+        cmd_sync_to_cloud(args)
     elif args.command == 'status':
         cmd_status(args)
     else:

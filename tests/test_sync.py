@@ -433,6 +433,275 @@ def test_dry_run():
         return True
 
 
+def test_sync_to_cloud_newer_local():
+    """Test sync_to_cloud with newer local files"""
+    print("\nTest 14: sync_to_cloud with newer local files...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create older cloud file
+        cloud_file = cloud_dir / "save.dat"
+        cloud_file.write_text("old data")
+        old_time = time.time() - 100
+        os.utime(cloud_file, (old_time, old_time))
+        
+        # Create newer local file
+        local_file = local_dir / "save.dat"
+        local_file.write_text("new data")
+        
+        engine = SyncEngine()
+        result = engine.sync_to_cloud(local_dir, cloud_dir)
+        
+        assert result['total_copied'] == 1
+        assert result['total_skipped'] == 0
+        assert result['total_errors'] == 0
+        assert cloud_file.read_text() == "new data"
+        print("  ✓ Copied newer local file to cloud")
+        return True
+
+
+def test_sync_to_cloud_newer_cloud():
+    """Test sync_to_cloud skips when cloud is newer"""
+    print("\nTest 15: sync_to_cloud skips when cloud is newer...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create older local file
+        local_file = local_dir / "save.dat"
+        local_file.write_text("old data")
+        old_time = time.time() - 100
+        os.utime(local_file, (old_time, old_time))
+        
+        # Create newer cloud file
+        cloud_file = cloud_dir / "save.dat"
+        cloud_file.write_text("new data")
+        
+        engine = SyncEngine()
+        result = engine.sync_to_cloud(local_dir, cloud_dir)
+        
+        assert result['total_copied'] == 0
+        assert result['total_skipped'] == 1
+        assert result['skipped'][0]['reason'] == "cloud is newer"
+        assert cloud_file.read_text() == "new data"
+        print("  ✓ Skipped (cloud is newer)")
+        return True
+
+
+def test_sync_to_cloud_equal_files():
+    """Test sync_to_cloud skips equal files"""
+    print("\nTest 16: sync_to_cloud skips equal files...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create identical files
+        local_file = local_dir / "save.dat"
+        local_file.write_text("same data")
+        cloud_file = cloud_dir / "save.dat"
+        cloud_file.write_text("same data")
+        
+        # Set same timestamp
+        mtime = time.time()
+        os.utime(local_file, (mtime, mtime))
+        os.utime(cloud_file, (mtime, mtime))
+        
+        engine = SyncEngine()
+        result = engine.sync_to_cloud(local_dir, cloud_dir)
+        
+        assert result['total_copied'] == 0
+        assert result['total_skipped'] == 1
+        assert result['skipped'][0]['reason'] == "files are equal"
+        print("  ✓ Skipped (files are equal)")
+        return True
+
+
+def test_sync_to_cloud_force():
+    """Test sync_to_cloud with force flag"""
+    print("\nTest 17: sync_to_cloud with --force overrides safety...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create older local file
+        local_file = local_dir / "save.dat"
+        local_file.write_text("old data")
+        old_time = time.time() - 100
+        os.utime(local_file, (old_time, old_time))
+        
+        # Create newer cloud file
+        cloud_file = cloud_dir / "save.dat"
+        cloud_file.write_text("new data")
+        
+        engine = SyncEngine()
+        result = engine.sync_to_cloud(local_dir, cloud_dir, force=True)
+        
+        assert result['total_copied'] == 1
+        assert result['total_skipped'] == 0
+        assert cloud_file.read_text() == "old data"
+        print("  ✓ Force flag overrode safety check")
+        return True
+
+
+def test_sync_from_cloud_newer_cloud():
+    """Test sync_from_cloud with newer cloud files"""
+    print("\nTest 18: sync_from_cloud with newer cloud files...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create older local file
+        local_file = local_dir / "save.dat"
+        local_file.write_text("old data")
+        old_time = time.time() - 100
+        os.utime(local_file, (old_time, old_time))
+        
+        # Create newer cloud file
+        cloud_file = cloud_dir / "save.dat"
+        cloud_file.write_text("new data")
+        
+        engine = SyncEngine()
+        result = engine.sync_from_cloud(local_dir, cloud_dir)
+        
+        assert result['total_copied'] == 1
+        assert result['total_skipped'] == 0
+        assert result['total_errors'] == 0
+        assert local_file.read_text() == "new data"
+        print("  ✓ Copied newer cloud file to local")
+        return True
+
+
+def test_sync_from_cloud_newer_local():
+    """Test sync_from_cloud skips when local is newer"""
+    print("\nTest 19: sync_from_cloud skips when local is newer...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create older cloud file
+        cloud_file = cloud_dir / "save.dat"
+        cloud_file.write_text("old data")
+        old_time = time.time() - 100
+        os.utime(cloud_file, (old_time, old_time))
+        
+        # Create newer local file
+        local_file = local_dir / "save.dat"
+        local_file.write_text("new data")
+        
+        engine = SyncEngine()
+        result = engine.sync_from_cloud(local_dir, cloud_dir)
+        
+        assert result['total_copied'] == 0
+        assert result['total_skipped'] == 1
+        assert result['skipped'][0]['reason'] == "local is newer"
+        assert local_file.read_text() == "new data"
+        print("  ✓ Skipped (local is newer)")
+        return True
+
+
+def test_sync_from_cloud_equal_files():
+    """Test sync_from_cloud skips equal files"""
+    print("\nTest 20: sync_from_cloud skips equal files...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create identical files
+        local_file = local_dir / "save.dat"
+        local_file.write_text("same data")
+        cloud_file = cloud_dir / "save.dat"
+        cloud_file.write_text("same data")
+        
+        # Set same timestamp
+        mtime = time.time()
+        os.utime(local_file, (mtime, mtime))
+        os.utime(cloud_file, (mtime, mtime))
+        
+        engine = SyncEngine()
+        result = engine.sync_from_cloud(local_dir, cloud_dir)
+        
+        assert result['total_copied'] == 0
+        assert result['total_skipped'] == 1
+        assert result['skipped'][0]['reason'] == "files are equal"
+        print("  ✓ Skipped (files are equal)")
+        return True
+
+
+def test_sync_from_cloud_force():
+    """Test sync_from_cloud with force flag"""
+    print("\nTest 21: sync_from_cloud with --force overrides safety...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create older cloud file
+        cloud_file = cloud_dir / "save.dat"
+        cloud_file.write_text("old data")
+        old_time = time.time() - 100
+        os.utime(cloud_file, (old_time, old_time))
+        
+        # Create newer local file
+        local_file = local_dir / "save.dat"
+        local_file.write_text("new data")
+        
+        engine = SyncEngine()
+        result = engine.sync_from_cloud(local_dir, cloud_dir, force=True)
+        
+        assert result['total_copied'] == 1
+        assert result['total_skipped'] == 0
+        assert local_file.read_text() == "old data"
+        print("  ✓ Force flag overrode safety check")
+        return True
+
+
+def test_sync_directional_dry_run():
+    """Test directional sync dry-run mode"""
+    print("\nTest 22: Directional sync dry-run mode...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        local_dir = Path(tmpdir) / "local"
+        cloud_dir = Path(tmpdir) / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create newer local file
+        local_file = local_dir / "save.dat"
+        local_file.write_text("new data")
+        
+        engine = SyncEngine()
+        result = engine.sync_to_cloud(local_dir, cloud_dir, dry_run=True)
+        
+        assert result['total_copied'] == 1
+        assert not (cloud_dir / "save.dat").exists()
+        print("  ✓ Dry-run reported action but didn't copy")
+        return True
+
+
 def main():
     print("=== Sync Engine Tests ===\n")
     
@@ -450,7 +719,16 @@ def main():
         test_backup_with_timestamp,
         test_sync_algorithm,
         test_sync_with_backup,
-        test_dry_run
+        test_dry_run,
+        test_sync_to_cloud_newer_local,
+        test_sync_to_cloud_newer_cloud,
+        test_sync_to_cloud_equal_files,
+        test_sync_to_cloud_force,
+        test_sync_from_cloud_newer_cloud,
+        test_sync_from_cloud_newer_local,
+        test_sync_from_cloud_equal_files,
+        test_sync_from_cloud_force,
+        test_sync_directional_dry_run
     ]
     
     results = []

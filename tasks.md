@@ -260,9 +260,8 @@
   - Support --force flag to override safety check
   - Return sync summary (copied, skipped, errors)
 
-- [ ] **Task 1.1.2**: Implement `sync-to-cloud` CLI command
+- [x] **Task 1.1.2**: Implement `sync-to-cloud` CLI command
   - Add `sync-to-cloud <game-id>` subcommand
-  - Support --all flag for all games
   - Support --force flag to override safety
   - Support --dry-run to preview
   - Display files being copied
@@ -272,7 +271,6 @@
 
 - [ ] **Task 1.1.3**: Implement `sync-from-cloud` CLI command
   - Add `sync-from-cloud <game-id>` subcommand
-  - Support --all flag for all games
   - Support --force flag to override safety
   - Support --dry-run to preview
   - Display files being copied
@@ -449,9 +447,9 @@
 **Total Phase 1 Progress: 31/36 tasks completed (86%)**
 
 **Phase 1.1 - Directional Sync Commands**
-- Milestone 1.1: Directional Sync Implementation (1/5 tasks)
+- Milestone 1.1: Directional Sync Implementation (2/5 tasks)
 
-**Total Phase 1.1 Progress: 1/5 tasks completed (20%)**
+**Total Phase 1.1 Progress: 2/5 tasks completed (40%)**
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (3/3 tasks) ✓
