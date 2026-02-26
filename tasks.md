@@ -250,7 +250,7 @@
 
 ### Milestone 1.1: Directional Sync Implementation
 
-- [ ] **Task 1.1.1**: Implement directional sync logic
+- [x] **Task 1.1.1**: Implement directional sync logic
   - Create `sync_to_cloud()` function in sync_engine.py
   - Create `sync_from_cloud()` function in sync_engine.py
   - Compare file timestamps (mtime)
@@ -449,9 +449,9 @@
 **Total Phase 1 Progress: 31/36 tasks completed (86%)**
 
 **Phase 1.1 - Directional Sync Commands**
-- Milestone 1.1: Directional Sync Implementation (0/5 tasks)
+- Milestone 1.1: Directional Sync Implementation (1/5 tasks)
 
-**Total Phase 1.1 Progress: 0/5 tasks completed (0%)**
+**Total Phase 1.1 Progress: 1/5 tasks completed (20%)**
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (3/3 tasks) ✓

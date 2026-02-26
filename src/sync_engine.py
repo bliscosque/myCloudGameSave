@@ -5,6 +5,7 @@ Handles file synchronization between local and cloud
 
 import os
 import shutil
+import hashlib
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from datetime import datetime
@@ -418,3 +419,179 @@ class SyncEngine:
                 summary["files"]["skip"].append(comp.filename)
         
         return summary
+    
+    def _calculate_checksum(self, file_path: Path) -> Optional[str]:
+        """Calculate MD5 checksum of a file
+        
+        Args:
+            file_path: Path to file
+            
+        Returns:
+            MD5 checksum as hex string, or None if error
+        """
+        try:
+            md5 = hashlib.md5()
+            with open(file_path, 'rb') as f:
+                for chunk in iter(lambda: f.read(8192), b''):
+                    md5.update(chunk)
+            return md5.hexdigest()
+        except Exception:
+            return None
+    
+    def _files_equal(self, file1: Path, file2: Path) -> bool:
+        """Check if two files are equal (same timestamp and checksum)
+        
+        Args:
+            file1: First file path
+            file2: Second file path
+            
+        Returns:
+            True if files are equal
+        """
+        if not file1.exists() or not file2.exists():
+            return False
+        
+        # Check timestamps first (faster)
+        stat1 = file1.stat()
+        stat2 = file2.stat()
+        
+        if abs(stat1.st_mtime - stat2.st_mtime) > 1:  # Allow 1 second tolerance
+            return False
+        
+        # Check checksums
+        checksum1 = self._calculate_checksum(file1)
+        checksum2 = self._calculate_checksum(file2)
+        
+        return checksum1 is not None and checksum1 == checksum2
+    
+    def sync_to_cloud(self, local_dir: Path, cloud_dir: Path, force: bool = False, dry_run: bool = False) -> Dict[str, Any]:
+        """Sync files from local to cloud (one-way)
+        
+        Only copies files if local is newer than cloud.
+        Never replaces newer cloud files unless force=True.
+        
+        Args:
+            local_dir: Local directory path
+            cloud_dir: Cloud directory path
+            force: Override safety check (copy even if cloud is newer)
+            dry_run: Preview only, don't actually copy
+            
+        Returns:
+            Dictionary with sync results
+        """
+        result = {
+            "copied": [],
+            "skipped": [],
+            "errors": [],
+            "total_copied": 0,
+            "total_skipped": 0,
+            "total_errors": 0
+        }
+        
+        if not local_dir.exists():
+            result["errors"].append(f"Local directory does not exist: {local_dir}")
+            result["total_errors"] = 1
+            return result
+        
+        # Get all local files
+        local_files = self._get_files(local_dir)
+        
+        for filename in sorted(local_files):
+            local_path = local_dir / filename
+            cloud_path = cloud_dir / filename
+            
+            # Check if files are equal
+            if cloud_path.exists() and self._files_equal(local_path, cloud_path):
+                result["skipped"].append({"file": filename, "reason": "files are equal"})
+                result["total_skipped"] += 1
+                continue
+            
+            # Check if cloud is newer (safety check)
+            if cloud_path.exists() and not force:
+                local_mtime = local_path.stat().st_mtime
+                cloud_mtime = cloud_path.stat().st_mtime
+                
+                if cloud_mtime > local_mtime:
+                    result["skipped"].append({"file": filename, "reason": "cloud is newer"})
+                    result["total_skipped"] += 1
+                    continue
+            
+            # Copy file
+            if not dry_run:
+                if self.copy_file(local_path, cloud_path):
+                    result["copied"].append(filename)
+                    result["total_copied"] += 1
+                else:
+                    result["errors"].append(f"Failed to copy {filename}")
+                    result["total_errors"] += 1
+            else:
+                result["copied"].append(filename)
+                result["total_copied"] += 1
+        
+        return result
+    
+    def sync_from_cloud(self, local_dir: Path, cloud_dir: Path, force: bool = False, dry_run: bool = False) -> Dict[str, Any]:
+        """Sync files from cloud to local (one-way)
+        
+        Only copies files if cloud is newer than local.
+        Never replaces newer local files unless force=True.
+        
+        Args:
+            local_dir: Local directory path
+            cloud_dir: Cloud directory path
+            force: Override safety check (copy even if local is newer)
+            dry_run: Preview only, don't actually copy
+            
+        Returns:
+            Dictionary with sync results
+        """
+        result = {
+            "copied": [],
+            "skipped": [],
+            "errors": [],
+            "total_copied": 0,
+            "total_skipped": 0,
+            "total_errors": 0
+        }
+        
+        if not cloud_dir.exists():
+            result["errors"].append(f"Cloud directory does not exist: {cloud_dir}")
+            result["total_errors"] = 1
+            return result
+        
+        # Get all cloud files
+        cloud_files = self._get_files(cloud_dir)
+        
+        for filename in sorted(cloud_files):
+            local_path = local_dir / filename
+            cloud_path = cloud_dir / filename
+            
+            # Check if files are equal
+            if local_path.exists() and self._files_equal(local_path, cloud_path):
+                result["skipped"].append({"file": filename, "reason": "files are equal"})
+                result["total_skipped"] += 1
+                continue
+            
+            # Check if local is newer (safety check)
+            if local_path.exists() and not force:
+                local_mtime = local_path.stat().st_mtime
+                cloud_mtime = cloud_path.stat().st_mtime
+                
+                if local_mtime > cloud_mtime:
+                    result["skipped"].append({"file": filename, "reason": "local is newer"})
+                    result["total_skipped"] += 1
+                    continue
+            
+            # Copy file
+            if not dry_run:
+                if self.copy_file(cloud_path, local_path):
+                    result["copied"].append(filename)
+                    result["total_copied"] += 1
+                else:
+                    result["errors"].append(f"Failed to copy {filename}")
+                    result["total_errors"] += 1
+            else:
+                result["copied"].append(filename)
+                result["total_copied"] += 1
+        
+        return result
