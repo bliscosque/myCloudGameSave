@@ -2,6 +2,7 @@
 """Integration tests for end-to-end workflows"""
 
 import sys
+import os
 import tempfile
 import time
 from pathlib import Path
@@ -215,6 +216,143 @@ def test_dry_run_workflow():
         return True
 
 
+def test_directional_sync_to_cloud_workflow():
+    """Test sync-to-cloud workflow"""
+    print("\nTest 6: Directional sync-to-cloud workflow...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+        
+        local_dir = tmpdir / "local"
+        cloud_dir = tmpdir / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create newer local file
+        local_file = local_dir / "save.dat"
+        local_file.write_text("new local data")
+        
+        # Create older cloud file
+        cloud_file = cloud_dir / "save.dat"
+        cloud_file.write_text("old cloud data")
+        old_time = time.time() - 100
+        os.utime(cloud_file, (old_time, old_time))
+        
+        # Sync to cloud
+        sync_engine = SyncEngine()
+        result = sync_engine.sync_to_cloud(local_dir, cloud_dir)
+        
+        # Verify cloud was updated
+        assert result['total_copied'] == 1
+        assert cloud_file.read_text() == "new local data"
+        
+        print("  ✓ Directional sync-to-cloud workflow works")
+        return True
+
+
+def test_directional_sync_from_cloud_workflow():
+    """Test sync-from-cloud workflow"""
+    print("\nTest 7: Directional sync-from-cloud workflow...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+        
+        local_dir = tmpdir / "local"
+        cloud_dir = tmpdir / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create older local file
+        local_file = local_dir / "save.dat"
+        local_file.write_text("old local data")
+        old_time = time.time() - 100
+        os.utime(local_file, (old_time, old_time))
+        
+        # Create newer cloud file
+        cloud_file = cloud_dir / "save.dat"
+        cloud_file.write_text("new cloud data")
+        
+        # Sync from cloud
+        sync_engine = SyncEngine()
+        result = sync_engine.sync_from_cloud(local_dir, cloud_dir)
+        
+        # Verify local was updated
+        assert result['total_copied'] == 1
+        assert local_file.read_text() == "new cloud data"
+        
+        print("  ✓ Directional sync-from-cloud workflow works")
+        return True
+
+
+def test_directional_sync_safety():
+    """Test directional sync safety (doesn't overwrite newer files)"""
+    print("\nTest 8: Directional sync safety checks...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+        
+        local_dir = tmpdir / "local"
+        cloud_dir = tmpdir / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create newer cloud file
+        cloud_file = cloud_dir / "save.dat"
+        cloud_file.write_text("newer cloud data")
+        
+        # Create older local file
+        local_file = local_dir / "save.dat"
+        local_file.write_text("older local data")
+        old_time = time.time() - 100
+        os.utime(local_file, (old_time, old_time))
+        
+        # Try to sync to cloud (should skip)
+        sync_engine = SyncEngine()
+        result = sync_engine.sync_to_cloud(local_dir, cloud_dir)
+        
+        # Verify cloud was NOT overwritten
+        assert result['total_copied'] == 0
+        assert result['total_skipped'] == 1
+        assert cloud_file.read_text() == "newer cloud data"
+        
+        print("  ✓ Directional sync safety works (skipped newer cloud file)")
+        return True
+
+
+def test_directional_sync_force():
+    """Test directional sync with force flag"""
+    print("\nTest 9: Directional sync with --force flag...")
+    
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+        
+        local_dir = tmpdir / "local"
+        cloud_dir = tmpdir / "cloud"
+        local_dir.mkdir()
+        cloud_dir.mkdir()
+        
+        # Create newer cloud file
+        cloud_file = cloud_dir / "save.dat"
+        cloud_file.write_text("newer cloud data")
+        
+        # Create older local file
+        local_file = local_dir / "save.dat"
+        local_file.write_text("older local data")
+        old_time = time.time() - 100
+        os.utime(local_file, (old_time, old_time))
+        
+        # Force sync to cloud
+        sync_engine = SyncEngine()
+        result = sync_engine.sync_to_cloud(local_dir, cloud_dir, force=True)
+        
+        # Verify cloud WAS overwritten
+        assert result['total_copied'] == 1
+        assert cloud_file.read_text() == "older local data"
+        
+        print("  ✓ Force flag overrides safety check")
+        return True
+
+
 def run_all_tests():
     """Run all integration tests"""
     print("=" * 60)
@@ -227,6 +365,10 @@ def run_all_tests():
         test_game_detection_workflow,
         test_backup_workflow,
         test_dry_run_workflow,
+        test_directional_sync_to_cloud_workflow,
+        test_directional_sync_from_cloud_workflow,
+        test_directional_sync_safety,
+        test_directional_sync_force,
     ]
     
     passed = 0

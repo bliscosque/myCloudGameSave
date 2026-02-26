@@ -278,7 +278,7 @@
   - Show summary at end
   - Handle errors gracefully
 
-- [ ] **Task 1.1.4**: Add tests for directional sync
+- [x] **Task 1.1.4**: Add tests for directional sync
   - Test sync-to-cloud with newer local files
   - Test sync-to-cloud with newer cloud files (should skip)
   - Test sync-to-cloud with equal files (should skip)
@@ -447,9 +447,9 @@
 **Total Phase 1 Progress: 31/36 tasks completed (86%)**
 
 **Phase 1.1 - Directional Sync Commands**
-- Milestone 1.1: Directional Sync Implementation (3/5 tasks)
+- Milestone 1.1: Directional Sync Implementation (4/5 tasks)
 
-**Total Phase 1.1 Progress: 3/5 tasks completed (60%)**
+**Total Phase 1.1 Progress: 4/5 tasks completed (80%)**
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (3/3 tasks) ✓
