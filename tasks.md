@@ -289,7 +289,7 @@
   - Test --dry-run behavior
   - Test error handling
 
-- [ ] **Task 1.1.5**: Update documentation
+- [x] **Task 1.1.5**: Update documentation
   - Add sync-to-cloud command to USER_GUIDE.md
   - Add sync-from-cloud command to USER_GUIDE.md
   - Document pre-game/post-game workflow
@@ -447,9 +447,9 @@
 **Total Phase 1 Progress: 31/36 tasks completed (86%)**
 
 **Phase 1.1 - Directional Sync Commands**
-- Milestone 1.1: Directional Sync Implementation (4/5 tasks)
+- Milestone 1.1: Directional Sync Implementation (5/5 tasks) ✓
 
-**Total Phase 1.1 Progress: 4/5 tasks completed (80%)**
+**Total Phase 1.1 Progress: 5/5 tasks completed (100%)**
 
 **Phase 2 - TUI Implementation**
 - Milestone 8: TUI Foundation (3/3 tasks) ✓

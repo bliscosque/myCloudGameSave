@@ -301,6 +301,126 @@ Your choice [1-4]:
 
 ---
 
+### `sync-to-cloud` - One-Way Sync to Cloud
+
+```bash
+gamesync.py sync-to-cloud <game-id> [--dry-run] [--force]
+```
+
+Syncs game saves from local to cloud (one-way only). Designed for post-game workflow.
+
+**Behavior:**
+- Copies files if local is newer than cloud
+- Skips if files are equal (timestamp + checksum)
+- Skips if cloud is newer (safety check)
+- Use `--force` to override safety check
+
+**Options:**
+- `game-id`: Game to sync (required)
+- `--dry-run`: Preview without copying
+- `--force`: Override safety (copy even if cloud is newer)
+
+**Examples:**
+
+After playing a game:
+```bash
+~/vscode/venv/bin/python gamesync.py sync-to-cloud hellbladegame
+```
+
+Preview changes:
+```bash
+~/vscode/venv/bin/python gamesync.py --dry-run sync-to-cloud hellbladegame
+```
+
+Force sync (override safety):
+```bash
+~/vscode/venv/bin/python gamesync.py --force sync-to-cloud hellbladegame
+```
+
+**Output:**
+```
+============================================================
+Syncing to cloud: Hellblade Senua's Sacrifice
+============================================================
+Local:  /home/user/.local/share/Steam/steamapps/compatdata/.../SaveGames
+Cloud:  /home/user/Seafile/My Games/hellbladegame
+
+────────────────────────────────────────────────────────────
+
+✓ Copied to cloud (2 files):
+  → save1.sav
+  → save2.sav
+
+⊘ Skipped (1 files):
+  - save3.sav: files are equal
+
+============================================================
+Summary: 2 copied, 1 skipped, 0 errors
+============================================================
+```
+
+---
+
+### `sync-from-cloud` - One-Way Sync from Cloud
+
+```bash
+gamesync.py sync-from-cloud <game-id> [--dry-run] [--force]
+```
+
+Syncs game saves from cloud to local (one-way only). Designed for pre-game workflow.
+
+**Behavior:**
+- Copies files if cloud is newer than local
+- Skips if files are equal (timestamp + checksum)
+- Skips if local is newer (safety check)
+- Use `--force` to override safety check
+
+**Options:**
+- `game-id`: Game to sync (required)
+- `--dry-run`: Preview without copying
+- `--force`: Override safety (copy even if local is newer)
+
+**Examples:**
+
+Before playing a game:
+```bash
+~/vscode/venv/bin/python gamesync.py sync-from-cloud hellbladegame
+```
+
+Preview changes:
+```bash
+~/vscode/venv/bin/python gamesync.py --dry-run sync-from-cloud hellbladegame
+```
+
+Force sync (override safety):
+```bash
+~/vscode/venv/bin/python gamesync.py --force sync-from-cloud hellbladegame
+```
+
+**Output:**
+```
+============================================================
+Syncing from cloud: Hellblade Senua's Sacrifice
+============================================================
+Cloud:  /home/user/Seafile/My Games/hellbladegame
+Local:  /home/user/.local/share/Steam/steamapps/compatdata/.../SaveGames
+
+────────────────────────────────────────────────────────────
+
+✓ Copied from cloud (1 files):
+  ← save1.sav
+
+⊘ Skipped (2 files):
+  - save2.sav: local is newer
+  - save3.sav: files are equal
+
+============================================================
+Summary: 1 copied, 2 skipped, 0 errors
+============================================================
+```
+
+---
+
 ### `status` - Show Sync Status
 
 ```bash
@@ -380,11 +500,65 @@ Sync all games:
 
 ---
 
+### Pre-Game/Post-Game Workflow (Recommended)
+
+This workflow uses directional sync commands for safer, simpler synchronization.
+
+**Before playing a game:**
+```bash
+~/vscode/venv/bin/python gamesync.py sync-from-cloud <game-id>
+```
+
+This pulls the latest saves from cloud to local. Only copies if cloud is newer.
+
+**After playing a game:**
+```bash
+~/vscode/venv/bin/python gamesync.py sync-to-cloud <game-id>
+```
+
+This pushes your saves to cloud. Only copies if local is newer.
+
+**Example workflow:**
+```bash
+# Before playing Hellblade
+~/vscode/venv/bin/python gamesync.py sync-from-cloud hellbladegame
+
+# Play the game...
+
+# After playing
+~/vscode/venv/bin/python gamesync.py sync-to-cloud hellbladegame
+```
+
+**Benefits:**
+- Simple one-way sync (no conflicts)
+- Safe (never overwrites newer files)
+- Fast (only copies what changed)
+- Clear intent (to-cloud vs from-cloud)
+
+**Integration with Steam:**
+
+You can add these commands to Steam launch options:
+
+1. Right-click game in Steam → Properties → Launch Options
+2. Add before game executable:
+   ```
+   ~/vscode/venv/bin/python ~/path/to/gamesync.py sync-from-cloud <game-id> && %command%
+   ```
+
+Note: Post-game sync must be run manually after closing the game.
+
+---
+
 ### Before Playing on Another Machine
 
 Sync from cloud to local:
 ```bash
 ~/vscode/venv/bin/python gamesync.py sync --all
+```
+
+Or use directional sync for specific game:
+```bash
+~/vscode/venv/bin/python gamesync.py sync-from-cloud <game-id>
 ```
 
 This pulls the latest saves from cloud to your local machine.
@@ -396,6 +570,11 @@ This pulls the latest saves from cloud to your local machine.
 Sync from local to cloud:
 ```bash
 ~/vscode/venv/bin/python gamesync.py sync --all
+```
+
+Or use directional sync for specific game:
+```bash
+~/vscode/venv/bin/python gamesync.py sync-to-cloud <game-id>
 ```
 
 This pushes your updated saves to the cloud.
