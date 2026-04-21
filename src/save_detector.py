@@ -158,6 +158,46 @@ class SaveLocationDetector:
         
         return None
     
+    def _get_search_names(self, game_info: Dict[str, Any]) -> List[str]:
+        """Get all possible names to search for a game (display name, exe name, exe parent dir)"""
+        names = []
+        game_name = game_info.get('name', '')
+        if game_name:
+            names.append(self._clean_game_name(game_name))
+        
+        exe_path = game_info.get('exe', '').replace('"', '').replace("'", '')
+        if exe_path:
+            from pathlib import PureWindowsPath, PurePosixPath
+            p = PureWindowsPath(exe_path) if '\\' in exe_path else PurePosixPath(exe_path)
+            # Exe stem (e.g. "Expedition33_Steam")
+            if p.stem:
+                names.append(self._clean_game_name(p.stem))
+            # Parent directory name (e.g. "Clair Obscur - Expedition 33")
+            if p.parent.name:
+                names.append(self._clean_game_name(p.parent.name))
+        
+        return [n for n in names if n]
+
+    def _find_save_patterns_in_prefix(self, proton_prefix: Path) -> List[Path]:
+        """Fallback: find common save patterns (e.g. Unreal Engine) in proton prefix"""
+        candidates = []
+        appdata_local = proton_prefix / "users" / "steamuser" / "AppData" / "Local"
+        if not appdata_local.exists():
+            return candidates
+        
+        try:
+            for item in appdata_local.iterdir():
+                if not item.is_dir() or item.name in ['Microsoft', 'Temp', 'temp', 'Cache', 'cache', 'UnrealEngine']:
+                    continue
+                # Look for Unreal Engine pattern: */Saved/SaveGames
+                saved_dir = item / "Saved" / "SaveGames"
+                if saved_dir.exists():
+                    candidates.append(saved_dir)
+        except PermissionError:
+            pass
+        
+        return candidates
+
     def find_save_directories(self, game_info: Dict[str, Any], steam_path: Path = None) -> List[Path]:
         """Find potential save directories for a game
         
@@ -169,10 +209,7 @@ class SaveLocationDetector:
             List of potential save directories
         """
         candidates = []
-        game_name = game_info.get('name', '')
-        
-        # Clean game name for directory matching
-        clean_name = self._clean_game_name(game_name)
+        search_names = self._get_search_names(game_info)
         
         # Check Proton prefix (Linux only) - PRIORITY for non-Steam games
         if self.os_type == "linux":
@@ -190,10 +227,14 @@ class SaveLocationDetector:
                 
                 for loc in prefix_locations:
                     if loc.exists():
-                        # Look for game-specific subdirectories
-                        game_subdirs = self._find_game_subdirs(loc, clean_name)
-                        if game_subdirs:
-                            candidates.extend(game_subdirs)
+                        for name in search_names:
+                            game_subdirs = self._find_game_subdirs(loc, name)
+                            if game_subdirs:
+                                candidates.extend(game_subdirs)
+                
+                # Fallback: search for common save patterns in prefix
+                if not candidates:
+                    candidates.extend(self._find_save_patterns_in_prefix(proton_prefix))
         
         # Check game installation directory
         game_dir = self.check_game_directory(game_info)
@@ -205,10 +246,11 @@ class SaveLocationDetector:
                 if potential.exists():
                     candidates.append(potential)
         
-        # Check common OS save locations (lower priority for Proton games)
-        if not candidates or self.os_type != "linux":
+        # Check common OS save locations (lower priority, only if no proton results)
+        if not candidates:
             for base_loc in self.get_common_save_locations():
-                candidates.extend(self._find_game_subdirs(base_loc, clean_name))
+                for name in search_names:
+                    candidates.extend(self._find_game_subdirs(base_loc, name))
         
         # Remove duplicates and return
         return list(set(candidates))    
