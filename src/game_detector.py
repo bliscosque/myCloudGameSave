@@ -259,15 +259,14 @@ class GameDetector:
         Returns:
             Backup directory name (lowercase exe name without extension)
         """
-        import os
+        from pathlib import PureWindowsPath, PurePosixPath
         exe_path = game_info.get('exe', '')
         if exe_path:
-            # Extract filename from path and remove extension
-            exe_name = os.path.basename(exe_path)
-            # Remove extension and quotes
+            # Handle both Windows and Linux paths
+            exe_name = PureWindowsPath(exe_path).name if '\\' in exe_path else PurePosixPath(exe_path).name
+            # Remove quotes and extension
             exe_name = exe_name.replace('"', '').replace("'", '')
-            name_without_ext = os.path.splitext(exe_name)[0]
-            # Convert to lowercase
+            name_without_ext = exe_name.rsplit('.', 1)[0] if '.' in exe_name else exe_name
             return name_without_ext.lower()
         
         # Fallback to game_id if no exe
