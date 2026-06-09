@@ -100,22 +100,22 @@ class SyncEngine:
         return comparisons
     
     def _get_files(self, directory: Path) -> set:
-        """Get all files in directory (non-recursive)
+        """Get all files in directory recursively
         
         Args:
             directory: Directory to scan
             
         Returns:
-            Set of filenames
+            Set of relative file paths (e.g. "subdir/file.dat")
         """
         if not directory.exists():
             return set()
         
         files = set()
         try:
-            for item in directory.iterdir():
+            for item in directory.rglob("*"):
                 if item.is_file():
-                    files.add(item.name)
+                    files.add(str(item.relative_to(directory)))
         except PermissionError:
             pass
         
